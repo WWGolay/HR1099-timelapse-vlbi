@@ -1,0 +1,13 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-article
+root: README
+options:
+  numbered: false
+sections:
+- file: notebooks/1_calibrators
+- file: notebooks/2_HR1099_positions
+- file: notebooks/3_velocity_corner
+- file: notebooks/4_radio_maps
+- file: notebooks/5_velocity_comparison

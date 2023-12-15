@@ -1,0 +1,571 @@
+! Started logfile: ../data/B/difmap-sc/HR1099/HR1099B-I-sc.log on Mon Oct  2 08:02:57 2023
+obs ../data/B/difmap-sc/HR1099/HR1099B-I-sc.uvf
+! Reading UV FITS file: ../data/B/difmap-sc/HR1099/HR1099B-I-sc.uvf
+! AN table 1: 7994 integrations on 36 of 36 possible baselines.
+! Apparent sampling: 0.482205 visibilities/baseline/integration-bin.
+! *** This seems a bit low - see "help observe" on the binwid argument.
+! Found source: HR1099
+! 
+! There is 1 IF, and a total of 1 channel:
+! 
+!  IF  Channel    Frequency  Freq offset  Number of   Overall IF
+!       origin    at origin  per channel   channels    bandwidth
+!  ------------------------------------------------------------- (Hz)
+!  01        1  2.22199e+10     2.56e+08          1     2.56e+08
+! 
+! Polarization(s): RR LL
+! 
+! Read 510 lines of history.
+! 
+! Reading 277542 visibilities.
+select I
+! Selecting polarization: I,  channels: 1..1
+! Reading IF 1 channels: 1..1
+![@muppet ../data/B/difmap-sc/HR1099/HR1099B-I-sc,2]
+float field_size
+field_size = 2048
+float field_cell
+field_cell = 0.0125
+integer clean_niter
+clean_niter = 50
+float clean_gain
+clean_gain = 0.03
+float dynam
+dynam = 6.0
+float soltime
+soltime = 30
+float thresh
+thresh = 0.5
+float win_mult
+win_mult = 1.8
+float limit_amp
+limit_amp = 0.0
+float old_peak
+float new_peak
+float flux_cutoff
+mapsize field_size, field_cell
+! Map grid = 2048x2048 pixels with 0.0125x0.0125 milli-arcsec cellsize.
+startmod
+! Applying default point source starting model.
+! Performing phase self-cal
+! Adding 1 model components to the UV plane model.
+! The established model now contains 1 components and 1 Jy
+! 
+! Correcting IF 1.
+!  A total of 25229 telescope corrections were flagged in sub-array 1.
+! 
+! Fit before self-cal, rms=0.997863Jy  sigma=50.848079
+! Fit after  self-cal, rms=0.985355Jy  sigma=50.297004
+! clrmod: Cleared the established, tentative and continuum models.
+! Redundant starting model cleared.
+uvw 2,-1
+! Uniform weighting binwidth: 2 (pixels).
+! Gridding weights will be scaled by errors raised to the power -1.
+! Radial weighting is not currently selected.
+selflims limit_amp,0
+! Selfcal amplitude corrections will not be limited.
+! Selfcal phase corrections will not be limited.
+! Selfcal will discard corrections that exceed limits.
+flux_cutoff = imstat(rms) * dynam
+! Inverting map and beam 
+! Estimated beam: bmin=0.329 mas, bmaj=0.733 mas, bpa=-6.487 degrees
+! Estimated noise=0.0811288 mJy/beam.
+repeat
+  if (peak(flux) > flux_cutoff) peakwin win_mult
+  clean clean_niter,clean_gain
+  flux_cutoff = imstat(rms) * dynam
+  selfcal
+  new_peak = peak(flux)
+  until(new_peak<=flux_cutoff)
+! Added new window around map position (0, 0).
+! clean: niter=50  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.0107397 Jy
+! Total flux subtracted in 50 components = 0.0107397 Jy
+! Clean residual min=-0.001625 max=0.003176 Jy/beam
+! Clean residual mean=0.000094 rms=0.000526 Jy/beam
+! Combined flux in latest and established models = 0.0107397 Jy
+! Performing phase self-cal
+! Adding 8 model components to the UV plane model.
+! The established model now contains 8 components and 0.0107397 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.025936Jy  sigma=1.239492
+! Fit after  self-cal, rms=0.025139Jy  sigma=1.209953
+! Inverting map 
+! clean: niter=50  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.00439448 Jy
+! Total flux subtracted in 50 components = 0.00439448 Jy
+! Clean residual min=-0.000904 max=0.002175 Jy/beam
+! Clean residual mean=0.000079 rms=0.000418 Jy/beam
+! Combined flux in latest and established models = 0.0151342 Jy
+! Performing phase self-cal
+! Adding 24 model components to the UV plane model.
+! The established model now contains 31 components and 0.0151342 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.024368Jy  sigma=1.158435
+! Fit after  self-cal, rms=0.024353Jy  sigma=1.157958
+! Inverting map 
+print "************** FINISHED UNIFORM WEIGHTING CLEAN **************"
+! ************** FINISHED UNIFORM WEIGHTING CLEAN ************** 
+! 
+uvw 0,-1
+! Uniform weighting is not currently selected.
+! Gridding weights will be scaled by errors raised to the power -1.
+! Radial weighting is not currently selected.
+win_mult = win_mult * 1.6
+clean_niter = clean_niter * 2
+dynam = dynam - 0.5
+flux_cutoff = imstat(rms) * dynam
+! Inverting map and beam 
+! Estimated beam: bmin=0.3623 mas, bmaj=0.8729 mas, bpa=-6.295 degrees
+! Estimated noise=0.0382366 mJy/beam.
+repeat
+  if (peak(flux) > flux_cutoff) peakwin win_mult
+  clean clean_niter,clean_gain
+  flux_cutoff = imstat(rms) * dynam
+  selfcal
+  new_peak = peak(flux)
+  until(new_peak<=flux_cutoff)
+! clean: niter=100  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.0042159 Jy
+! Component: 100  -  total flux cleaned = 0.00685933 Jy
+! Total flux subtracted in 100 components = 0.00685933 Jy
+! Clean residual min=-0.001197 max=0.002600 Jy/beam
+! Clean residual mean=0.000128 rms=0.000737 Jy/beam
+! Combined flux in latest and established models = 0.0219935 Jy
+! Performing phase self-cal
+! Adding 61 model components to the UV plane model.
+! The established model now contains 91 components and 0.0219935 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.023794Jy  sigma=1.111585
+! Fit after  self-cal, rms=0.023751Jy  sigma=1.108813
+! Inverting map 
+print "************** FINISHED NATURAL WEIGHTING CLEAN **************"
+! ************** FINISHED NATURAL WEIGHTING CLEAN ************** 
+! 
+gscale true
+! Performing overall amplitude self-cal
+! 
+! Correcting IF 1.
+!  A total of 3162 telescope corrections were flagged in sub-array 1.
+!  Telescope amplitude corrections in sub-array 1:
+!   BR        1.26     HN        1.20     KP        0.82     LA        0.82     
+!   MK        1.13     NL        1.20     OV        1.08     PT        0.82     
+!   SC        1.06     
+! 
+! 
+! Fit before self-cal, rms=0.023751Jy  sigma=1.108813
+! Fit after  self-cal, rms=0.027049Jy  sigma=1.086709
+dynam = dynam - 0.5
+flux_cutoff = imstat(rms) * dynam
+! Inverting map and beam 
+! Estimated beam: bmin=0.3784 mas, bmaj=0.9424 mas, bpa=-5.75 degrees
+! Estimated noise=0.0374346 mJy/beam.
+repeat
+  if (peak(flux) > flux_cutoff) peakwin win_mult
+  clean clean_niter,clean_gain
+  flux_cutoff = imstat(rms) * dynam
+  selfcal
+  new_peak = peak(flux)
+  until(new_peak<=flux_cutoff)
+! clean: niter=100  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.000212355 Jy
+! Component: 100  -  total flux cleaned = 0.000225574 Jy
+! Total flux subtracted in 100 components = 0.000225574 Jy
+! Clean residual min=-0.000999 max=0.001093 Jy/beam
+! Clean residual mean=0.000048 rms=0.000296 Jy/beam
+! Combined flux in latest and established models = 0.0222191 Jy
+! Performing phase self-cal
+! Adding 17 model components to the UV plane model.
+! The established model now contains 108 components and 0.0222191 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.027040Jy  sigma=1.086050
+! Fit after  self-cal, rms=0.027373Jy  sigma=1.082746
+! Inverting map 
+selfcal true, true, soltime
+! Performing amp+phase self-cal over 30 minute time intervals
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.027373Jy  sigma=1.082746
+! Fit after  self-cal, rms=0.029162Jy  sigma=1.059465
+dynam = dynam - 0.75
+clean clean_niter,clean_gain
+! Inverting map and beam 
+! Estimated beam: bmin=0.3787 mas, bmaj=0.9453 mas, bpa=-5.759 degrees
+! Estimated noise=0.0381057 mJy/beam.
+! clean: niter=100  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.000219945 Jy
+! Component: 100  -  total flux cleaned = 0.000228995 Jy
+! Total flux subtracted in 100 components = 0.000228995 Jy
+! Clean residual min=-0.000400 max=0.000668 Jy/beam
+! Clean residual mean=0.000008 rms=0.000135 Jy/beam
+! Combined flux in latest and established models = 0.0224481 Jy
+selfcal
+! Performing phase self-cal
+! Adding 12 model components to the UV plane model.
+! The established model now contains 120 components and 0.0224481 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.029157Jy  sigma=1.059263
+! Fit after  self-cal, rms=0.029216Jy  sigma=1.058241
+flux_cutoff = imstat(rms) * dynam
+! Inverting map 
+repeat
+  if (peak(flux) > flux_cutoff) peakwin win_mult
+  clean clean_niter,clean_gain
+  flux_cutoff = imstat(rms) * dynam
+  selfcal
+  new_peak = peak(flux)
+  until(new_peak<=flux_cutoff)
+! Added new window around map position (0.3, -3.4125).
+! clean: niter=100  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.000386142 Jy
+! Component: 100  -  total flux cleaned = 0.000305495 Jy
+! Total flux subtracted in 100 components = 0.000305495 Jy
+! Clean residual min=-0.000429 max=0.000586 Jy/beam
+! Clean residual mean=0.000006 rms=0.000128 Jy/beam
+! Combined flux in latest and established models = 0.0227536 Jy
+! Performing phase self-cal
+! Adding 22 model components to the UV plane model.
+! The established model now contains 142 components and 0.0227536 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.029199Jy  sigma=1.057866
+! Fit after  self-cal, rms=0.029155Jy  sigma=1.057702
+! Inverting map 
+! Added new window around map position (0.6125, -5.8375).
+! clean: niter=100  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.000512906 Jy
+! Component: 100  -  total flux cleaned = 0.000597427 Jy
+! Total flux subtracted in 100 components = 0.000597427 Jy
+! Clean residual min=-0.000517 max=0.000582 Jy/beam
+! Clean residual mean=0.000005 rms=0.000131 Jy/beam
+! Combined flux in latest and established models = 0.023351 Jy
+! Performing phase self-cal
+! Adding 25 model components to the UV plane model.
+! The established model now contains 164 components and 0.023351 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.029133Jy  sigma=1.057316
+! Fit after  self-cal, rms=0.029099Jy  sigma=1.057182
+! Inverting map 
+! Added new window around map position (-0.5625, 2.9875).
+! clean: niter=100  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.00055598 Jy
+! Component: 100  -  total flux cleaned = 0.00081784 Jy
+! Total flux subtracted in 100 components = 0.00081784 Jy
+! Clean residual min=-0.000452 max=0.000499 Jy/beam
+! Clean residual mean=0.000000 rms=0.000117 Jy/beam
+! Combined flux in latest and established models = 0.0241688 Jy
+! Performing phase self-cal
+! Adding 31 model components to the UV plane model.
+! The established model now contains 193 components and 0.0241688 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.029076Jy  sigma=1.056655
+! Fit after  self-cal, rms=0.029023Jy  sigma=1.056503
+! Inverting map 
+! Added new window around map position (0.7125, -0.6125).
+! clean: niter=100  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.000439966 Jy
+! Component: 100  -  total flux cleaned = 0.000611442 Jy
+! Total flux subtracted in 100 components = 0.000611442 Jy
+! Clean residual min=-0.000411 max=0.000521 Jy/beam
+! Clean residual mean=-0.000005 rms=0.000111 Jy/beam
+! Combined flux in latest and established models = 0.0247803 Jy
+! Performing phase self-cal
+! Adding 24 model components to the UV plane model.
+! The established model now contains 211 components and 0.0247803 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.029003Jy  sigma=1.055950
+! Fit after  self-cal, rms=0.028970Jy  sigma=1.055840
+! Inverting map 
+! Added new window around map position (-0.5375, 5.8625).
+! clean: niter=100  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.000597256 Jy
+! Component: 100  -  total flux cleaned = 0.000835551 Jy
+! Total flux subtracted in 100 components = 0.000835551 Jy
+! Clean residual min=-0.000357 max=0.000404 Jy/beam
+! Clean residual mean=-0.000007 rms=0.000104 Jy/beam
+! Combined flux in latest and established models = 0.0256158 Jy
+! Performing phase self-cal
+! Adding 26 model components to the UV plane model.
+! The established model now contains 232 components and 0.0256158 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.028949Jy  sigma=1.055217
+! Fit after  self-cal, rms=0.028919Jy  sigma=1.055122
+! Inverting map 
+print "************** FINISHED AMPLITUDE SELF-CAL **************"
+! ************** FINISHED AMPLITUDE SELF-CAL ************** 
+restore
+! restore: Substituting estimate of restoring beam from last 'invert'.
+! Restoring with beam: 0.3787 x 0.9453 at -5.759 degrees (North through East)
+! Clean map  min=-0.00054637  max=0.015532 Jy/beam
+if(peak(flux) > thresh)
+  selfcal true, true
+  clean clean_niter,clean_gain
+  selfcal
+  flux_cutoff = imstat(rms) * dynam
+  repeat
+    if (peak(flux) > flux_cutoff) peakwin win_mult
+    clean clean_niter,clean_gain
+    flux_cutoff = imstat(rms) * dynam
+    selfcal
+    new_peak = peak(flux)
+    until(new_peak<=flux_cutoff)
+  selfcal true, true
+  end if
+print "************** CLEARING MODEL AND STARTING OVER **********"
+! ************** CLEARING MODEL AND STARTING OVER ********** 
+clrmod true
+! clrmod: Cleared the established and tentative models.
+flux_cutoff = imstat(rms) * dynam
+! Inverting map 
+repeat
+  if (peak(flux) > flux_cutoff) peakwin win_mult
+  clean clean_niter,clean_gain
+  flux_cutoff = imstat(rms) * dynam
+  keep
+  new_peak = peak(flux)
+  until(new_peak<=flux_cutoff)
+! clean: niter=100  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.0131197 Jy
+! Component: 100  -  total flux cleaned = 0.0174632 Jy
+! Total flux subtracted in 100 components = 0.0174632 Jy
+! Clean residual min=-0.001086 max=0.001996 Jy/beam
+! Clean residual mean=0.000074 rms=0.000504 Jy/beam
+! Combined flux in latest and established models = 0.0174632 Jy
+! Adding 40 model components to the UV plane model.
+! The established model now contains 40 components and 0.0174632 Jy
+! Inverting map 
+clean
+! clean: niter=100  gain=0.03  cutoff=0
+! Component: 050  -  total flux cleaned = 0.00226074 Jy
+! Component: 100  -  total flux cleaned = 0.00359074 Jy
+! Total flux subtracted in 100 components = 0.00359074 Jy
+! Clean residual min=-0.000683 max=0.000953 Jy/beam
+! Clean residual mean=0.000027 rms=0.000218 Jy/beam
+! Combined flux in latest and established models = 0.0210539 Jy
+selfcal
+! Performing phase self-cal
+! Adding 55 model components to the UV plane model.
+! The established model now contains 89 components and 0.0210539 Jy
+! 
+! Correcting IF 1.
+! 
+! Fit before self-cal, rms=0.029051Jy  sigma=1.060079
+! Fit after  self-cal, rms=0.029159Jy  sigma=1.059170
+x = (field_size-8) * field_cell / 4
+addwin -x,x,-x,x
+clean (field_size*4),0.01
+! Inverting map 
+! clean: niter=8192  gain=0.01  cutoff=0
+! Component: 050  -  total flux cleaned = 0.000333287 Jy
+! Component: 100  -  total flux cleaned = 0.000615185 Jy
+! Component: 150  -  total flux cleaned = 0.000862903 Jy
+! Component: 200  -  total flux cleaned = 0.00108892 Jy
+! Component: 250  -  total flux cleaned = 0.0012982 Jy
+! Component: 300  -  total flux cleaned = 0.00149503 Jy
+! Component: 350  -  total flux cleaned = 0.00164525 Jy
+! Component: 400  -  total flux cleaned = 0.00178226 Jy
+! Component: 450  -  total flux cleaned = 0.00188665 Jy
+! Component: 500  -  total flux cleaned = 0.001994 Jy
+! Component: 550  -  total flux cleaned = 0.00209124 Jy
+! Component: 600  -  total flux cleaned = 0.0021918 Jy
+! Component: 650  -  total flux cleaned = 0.00227124 Jy
+! Component: 700  -  total flux cleaned = 0.00235451 Jy
+! Component: 750  -  total flux cleaned = 0.00242974 Jy
+! Component: 800  -  total flux cleaned = 0.00250869 Jy
+! Component: 850  -  total flux cleaned = 0.00257477 Jy
+! Component: 900  -  total flux cleaned = 0.00265537 Jy
+! Component: 950  -  total flux cleaned = 0.0027393 Jy
+! Component: 1000  -  total flux cleaned = 0.00281109 Jy
+! Component: 1050  -  total flux cleaned = 0.00288153 Jy
+! Component: 1100  -  total flux cleaned = 0.00296052 Jy
+! Component: 1150  -  total flux cleaned = 0.00303311 Jy
+! Component: 1200  -  total flux cleaned = 0.00310433 Jy
+! Component: 1250  -  total flux cleaned = 0.00316492 Jy
+! Component: 1300  -  total flux cleaned = 0.00321988 Jy
+! Component: 1350  -  total flux cleaned = 0.00324697 Jy
+! Component: 1400  -  total flux cleaned = 0.00328254 Jy
+! Component: 1450  -  total flux cleaned = 0.00332191 Jy
+! Component: 1500  -  total flux cleaned = 0.00334344 Jy
+! Component: 1550  -  total flux cleaned = 0.00336895 Jy
+! Component: 1600  -  total flux cleaned = 0.00339824 Jy
+! Component: 1650  -  total flux cleaned = 0.00341479 Jy
+! Component: 1700  -  total flux cleaned = 0.00343107 Jy
+! Component: 1750  -  total flux cleaned = 0.00344715 Jy
+! Component: 1800  -  total flux cleaned = 0.00344721 Jy
+! Component: 1850  -  total flux cleaned = 0.00347081 Jy
+! Component: 1900  -  total flux cleaned = 0.00349023 Jy
+! Component: 1950  -  total flux cleaned = 0.00350555 Jy
+! Component: 2000  -  total flux cleaned = 0.0035207 Jy
+! Component: 2050  -  total flux cleaned = 0.00353946 Jy
+! Component: 2100  -  total flux cleaned = 0.00355053 Jy
+! Component: 2150  -  total flux cleaned = 0.00356155 Jy
+! Component: 2200  -  total flux cleaned = 0.00358695 Jy
+! Component: 2250  -  total flux cleaned = 0.00359415 Jy
+! Component: 2300  -  total flux cleaned = 0.00360839 Jy
+! Component: 2350  -  total flux cleaned = 0.00361901 Jy
+! Component: 2400  -  total flux cleaned = 0.00363299 Jy
+! Component: 2450  -  total flux cleaned = 0.00365025 Jy
+! Component: 2500  -  total flux cleaned = 0.0036571 Jy
+! Component: 2550  -  total flux cleaned = 0.00368077 Jy
+! Component: 2600  -  total flux cleaned = 0.00369081 Jy
+! Component: 2650  -  total flux cleaned = 0.00369414 Jy
+! Component: 2700  -  total flux cleaned = 0.0037139 Jy
+! Component: 2750  -  total flux cleaned = 0.00373021 Jy
+! Component: 2800  -  total flux cleaned = 0.00374313 Jy
+! Component: 2850  -  total flux cleaned = 0.00376552 Jy
+! Component: 2900  -  total flux cleaned = 0.00377188 Jy
+! Component: 2950  -  total flux cleaned = 0.00378757 Jy
+! Component: 3000  -  total flux cleaned = 0.00381243 Jy
+! Component: 3050  -  total flux cleaned = 0.00383399 Jy
+! Component: 3100  -  total flux cleaned = 0.00384316 Jy
+! Component: 3150  -  total flux cleaned = 0.00385835 Jy
+! Component: 3200  -  total flux cleaned = 0.00387644 Jy
+! Component: 3250  -  total flux cleaned = 0.00389738 Jy
+! Component: 3300  -  total flux cleaned = 0.0039122 Jy
+! Component: 3350  -  total flux cleaned = 0.00392693 Jy
+! Component: 3400  -  total flux cleaned = 0.00394159 Jy
+! Component: 3450  -  total flux cleaned = 0.0039678 Jy
+! Component: 3500  -  total flux cleaned = 0.00398511 Jy
+! Component: 3550  -  total flux cleaned = 0.0040023 Jy
+! Component: 3600  -  total flux cleaned = 0.00402505 Jy
+! Component: 3650  -  total flux cleaned = 0.00403353 Jy
+! Component: 3700  -  total flux cleaned = 0.00405601 Jy
+! Component: 3750  -  total flux cleaned = 0.00406438 Jy
+! Component: 3800  -  total flux cleaned = 0.00408386 Jy
+! Component: 3850  -  total flux cleaned = 0.00410596 Jy
+! Component: 3900  -  total flux cleaned = 0.00410596 Jy
+! Component: 3950  -  total flux cleaned = 0.00413598 Jy
+! Component: 4000  -  total flux cleaned = 0.00414412 Jy
+! Component: 4050  -  total flux cleaned = 0.00416571 Jy
+! Component: 4100  -  total flux cleaned = 0.00418449 Jy
+! Component: 4150  -  total flux cleaned = 0.00420852 Jy
+! Component: 4200  -  total flux cleaned = 0.00422445 Jy
+! Component: 4250  -  total flux cleaned = 0.00424027 Jy
+! Component: 4300  -  total flux cleaned = 0.00425864 Jy
+! Component: 4350  -  total flux cleaned = 0.00427432 Jy
+! Component: 4400  -  total flux cleaned = 0.00429512 Jy
+! Component: 4450  -  total flux cleaned = 0.00431841 Jy
+! Component: 4500  -  total flux cleaned = 0.00434159 Jy
+! Component: 4550  -  total flux cleaned = 0.00436466 Jy
+! Component: 4600  -  total flux cleaned = 0.00437997 Jy
+! Component: 4650  -  total flux cleaned = 0.0044003 Jy
+! Component: 4700  -  total flux cleaned = 0.00442558 Jy
+! Component: 4750  -  total flux cleaned = 0.00444319 Jy
+! Component: 4800  -  total flux cleaned = 0.00446072 Jy
+! Component: 4850  -  total flux cleaned = 0.00448067 Jy
+! Component: 4900  -  total flux cleaned = 0.00450798 Jy
+! Component: 4950  -  total flux cleaned = 0.00453022 Jy
+! Component: 5000  -  total flux cleaned = 0.00454498 Jy
+! Component: 5050  -  total flux cleaned = 0.00456214 Jy
+! Component: 5100  -  total flux cleaned = 0.00458656 Jy
+! Component: 5150  -  total flux cleaned = 0.00460599 Jy
+! Component: 5200  -  total flux cleaned = 0.00463503 Jy
+! Component: 5250  -  total flux cleaned = 0.00464467 Jy
+! Component: 5300  -  total flux cleaned = 0.00466387 Jy
+! Component: 5350  -  total flux cleaned = 0.00469016 Jy
+! Component: 5400  -  total flux cleaned = 0.00470922 Jy
+! Component: 5450  -  total flux cleaned = 0.00473294 Jy
+! Component: 5500  -  total flux cleaned = 0.00474712 Jy
+! Component: 5550  -  total flux cleaned = 0.00477067 Jy
+! Component: 5600  -  total flux cleaned = 0.00479177 Jy
+! Component: 5650  -  total flux cleaned = 0.0048128 Jy
+! Component: 5700  -  total flux cleaned = 0.00484537 Jy
+! Component: 5750  -  total flux cleaned = 0.00485929 Jy
+! Component: 5800  -  total flux cleaned = 0.0048801 Jy
+! Component: 5850  -  total flux cleaned = 0.00490083 Jy
+! Component: 5900  -  total flux cleaned = 0.00492607 Jy
+! Component: 5950  -  total flux cleaned = 0.00496037 Jy
+! Component: 6000  -  total flux cleaned = 0.00498088 Jy
+! Component: 6050  -  total flux cleaned = 0.00499677 Jy
+! Component: 6100  -  total flux cleaned = 0.00502167 Jy
+! Component: 6150  -  total flux cleaned = 0.00505326 Jy
+! Component: 6200  -  total flux cleaned = 0.00507797 Jy
+! Component: 6250  -  total flux cleaned = 0.00510037 Jy
+! Component: 6300  -  total flux cleaned = 0.00512271 Jy
+! Component: 6350  -  total flux cleaned = 0.00514943 Jy
+! Component: 6400  -  total flux cleaned = 0.00516719 Jy
+! Component: 6450  -  total flux cleaned = 0.00518931 Jy
+! Component: 6500  -  total flux cleaned = 0.00521136 Jy
+! Component: 6550  -  total flux cleaned = 0.00524213 Jy
+! Component: 6600  -  total flux cleaned = 0.00526843 Jy
+! Component: 6650  -  total flux cleaned = 0.00528811 Jy
+! Component: 6700  -  total flux cleaned = 0.00531428 Jy
+! Component: 6750  -  total flux cleaned = 0.00534251 Jy
+! Component: 6800  -  total flux cleaned = 0.00535984 Jy
+! Component: 6850  -  total flux cleaned = 0.00538792 Jy
+! Component: 6900  -  total flux cleaned = 0.00540086 Jy
+! Component: 6950  -  total flux cleaned = 0.00543093 Jy
+! Component: 7000  -  total flux cleaned = 0.00545021 Jy
+! Component: 7050  -  total flux cleaned = 0.00547372 Jy
+! Component: 7100  -  total flux cleaned = 0.00550143 Jy
+! Component: 7150  -  total flux cleaned = 0.00552268 Jy
+! Component: 7200  -  total flux cleaned = 0.00554812 Jy
+! Component: 7250  -  total flux cleaned = 0.00556714 Jy
+! Component: 7300  -  total flux cleaned = 0.00559455 Jy
+! Component: 7350  -  total flux cleaned = 0.0056156 Jy
+! Component: 7400  -  total flux cleaned = 0.00563659 Jy
+! Component: 7450  -  total flux cleaned = 0.00565963 Jy
+! Component: 7500  -  total flux cleaned = 0.00568263 Jy
+! Component: 7550  -  total flux cleaned = 0.00570558 Jy
+! Component: 7600  -  total flux cleaned = 0.00573058 Jy
+! Component: 7650  -  total flux cleaned = 0.00575137 Jy
+! Component: 7700  -  total flux cleaned = 0.00577214 Jy
+! Component: 7750  -  total flux cleaned = 0.00579494 Jy
+! Component: 7800  -  total flux cleaned = 0.00581977 Jy
+! Component: 7850  -  total flux cleaned = 0.00584249 Jy
+! Component: 7900  -  total flux cleaned = 0.00586931 Jy
+! Component: 7950  -  total flux cleaned = 0.00588374 Jy
+! Component: 8000  -  total flux cleaned = 0.00591049 Jy
+! Component: 8050  -  total flux cleaned = 0.00592489 Jy
+! Component: 8100  -  total flux cleaned = 0.00595363 Jy
+! Component: 8150  -  total flux cleaned = 0.00597209 Jy
+! Total flux subtracted in 8192 components = 0.00598848 Jy
+! Clean residual min=-0.000105 max=0.000114 Jy/beam
+! Clean residual mean=0.000002 rms=0.000048 Jy/beam
+! Combined flux in latest and established models = 0.0270424 Jy
+keep
+! Adding 1296 model components to the UV plane model.
+! The established model now contains 1379 components and 0.0270424 Jy
+device ../data/B/difmap-sc/HR1099/HR1099B-I-sc.ps/vps
+! Attempting to open device: '../data/B/difmap-sc/HR1099/HR1099B-I-sc.ps/vps'
+loglevs 2
+! The new contour levels are:
+!  -2 2 4 8 16 32 64
+cmul = 0
+mapl cln
+! Inverting map 
+! restore: Substituting estimate of restoring beam from last 'invert'.
+! Restoring with beam: 0.3787 x 0.9453 at -5.759 degrees (North through East)
+! Clean map  min=-0.00039565  max=0.016309 Jy/beam
+save ../data/B/difmap-sc/HR1099/HR1099B-I-sc
+! Writing UV FITS file: ../data/B/difmap-sc/HR1099/HR1099B-I-sc.uvf
+! Writing 1379 model components to file: ../data/B/difmap-sc/HR1099/HR1099B-I-sc.mod
+! wwins: Wrote 7 windows to ../data/B/difmap-sc/HR1099/HR1099B-I-sc.win
+! Writing clean map to FITS file: ../data/B/difmap-sc/HR1099/HR1099B-I-sc.fits
+! Writing difmap environment to: ../data/B/difmap-sc/HR1099/HR1099B-I-sc.par
+![Exited script file: muppet]
+wmap "../data/B/difmap-sc/HR1099/HR1099B-I-sc.fits"
+! Writing clean map to FITS file: ../data/B/difmap-sc/HR1099/HR1099B-I-sc.fits
+quit
+! Quitting program
+! Log file ../data/B/difmap-sc/HR1099/HR1099B-I-sc.log closed on Mon Oct  2 08:03:19 2023
