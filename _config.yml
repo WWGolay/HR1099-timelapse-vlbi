@@ -10,6 +10,7 @@ logo: logo.png
 # See https://jupyterbook.org/content/execute.html
 execute:
   execute_notebooks: force
+  timeout: 600  # seconds
 
 # Information about where the book exists on the web
 repository:
