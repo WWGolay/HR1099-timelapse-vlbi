@@ -7,5 +7,6 @@ ghp-import==2.1.0
 jupyter-book==0.15.1
 matplotlib==3.8.2
 numpy==1.26.2
+scipy==1.11.4
 smplotlib==0.0.9 # pip
 skyfield==1.45
