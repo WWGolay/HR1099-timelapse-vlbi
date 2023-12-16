@@ -1,6 +1,6 @@
 # HR 1099 Timelapse VLBI
-<!--- [![paper](https://img.shields.io/badge/read-the%20paper-B31B1B)](https://ui.adsabs.harvard.edu/abs/2022arXiv221011440G/abstract)
-[![DOI](https://zenodo.org/badge/536387182.svg)](https://zenodo.org/badge/latestdoi/536387182) --->
+<!--- [![paper](https://img.shields.io/badge/read-the%20paper-B31B1B)](https://ui.adsabs.harvard.edu/abs/2022arXiv221011440G/abstract) --->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10395762.svg)](https://doi.org/10.5281/zenodo.10395762)
 [![Jupyter Book Badge](https://jupyterbook.org/badge.svg)](https://wwgolay.github.io/HR1099-timelapse-vlbi)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
