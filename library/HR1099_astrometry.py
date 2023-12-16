@@ -10,13 +10,13 @@
 
 version = "23 Aug 2023"
 
-import numpy as np
-from scipy.optimize import root
-from skyfield.api import Star, load
-from astropy.coordinates import SkyCoord
 import astropy.units as u
 import matplotlib.pyplot as plt
+import numpy as np
+from astropy.coordinates import SkyCoord
 from scipy.interpolate import interp2d
+from scipy.optimize import root
+from skyfield.api import Star, load
 
 sec = 1
 day = 86400 * sec

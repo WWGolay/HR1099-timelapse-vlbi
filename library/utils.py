@@ -1,22 +1,22 @@
 import cmath
 import os
+import pickle
 import sys
 
-
 import matplotlib as mpl
-from matplotlib import offsetbox, patches
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import numpy as np
 from cmcrameri import cm
+from matplotlib import offsetbox, patches
+from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 from scipy import ndimage
-import pickle
 
 deg = np.pi / 180
 mas = deg / (60 * 60 * 1000)
 R_sun = 6.957e8
 mJy = 1
 Jy = 1e3 * mJy
+
 
 def polar2rect(r, phi):
     """
@@ -88,9 +88,9 @@ def plot_binary(
     show_coord_axes=False,
     hour_range=None,
     fontsize=14,
-    marker='o',
+    marker="o",
     d=None,
-    bar_pos='lower right'
+    bar_pos="lower right",
 ):
     if bg is not None:
         img = plt.imread(bg)
@@ -113,8 +113,12 @@ def plot_binary(
         ra2, dec2 = f_rot1(ra2, dec2, phi - np.pi / 2)
 
     if plot_stars:
-        s1 = plt.Circle((ra1, dec1), r1, color="red", zorder=1, label="K1 IV", alpha=0.2)
-        s2 = plt.Circle((ra2, dec2), r2, color="blue", zorder=1, label="G5 IV-V", alpha=0.2)
+        s1 = plt.Circle(
+            (ra1, dec1), r1, color="red", zorder=1, label="K1 IV", alpha=0.2
+        )
+        s2 = plt.Circle(
+            (ra2, dec2), r2, color="blue", zorder=1, label="G5 IV-V", alpha=0.2
+        )
         ax.add_artist(s1)
         ax.add_artist(s2)
 
@@ -124,10 +128,10 @@ def plot_binary(
     ax.plot([0], [0], markersize=5, marker="o", color="black")
 
     if hour_range is not None:
-        for hr in range(-hour_range, hour_range+1):
+        for hr in range(-hour_range, hour_range + 1):
             if hr == 0:
                 continue
-            ra1, dec1, ra2, dec2, rho1, rho2, phi = binary.binary_offsets(jd+hr/24)
+            ra1, dec1, ra2, dec2, rho1, rho2, phi = binary.binary_offsets(jd + hr / 24)
             ra1 /= mas
             dec1 /= mas
             ra2 /= mas
@@ -145,35 +149,23 @@ def plot_binary(
         )
         if corotate:
             im_model = ndimage.rotate(im_model, phi / deg - np.pi / 2, reshape=False)
-        levels = [max_lev_scalar*np.max(im_model) * l / 100 for l in levs]
-        # ax.contourf(xx / mas, yy / mas, im_model, levels=levels, cmap=cmap, zorder=2)
-        cs = ax.contour(xx / mas, yy / mas, im_model, levels=levels, cmap=cmap, zorder=3)
-
-        '''ax.annotate(
-            r"$F$=%.1f mJy" % (np.sum(im_model)), 
-            xy=(0.02, 0.04),
-            xycoords="axes fraction",
-            fontsize=fontsize+2,
-            horizontalalignment="left",
-            verticalalignment="bottom",
+        levels = [max_lev_scalar * np.max(im_model) * l / 100 for l in levs]
+        cs = ax.contour(
+            xx / mas, yy / mas, im_model, levels=levels, cmap=cmap, zorder=3
         )
-
-        if write_levs:
-            ax.annotate(
-                "Contours: " + ", ".join([f'{l}%' for l in levs]),
-                xy=(0.02, 0.02),
-                xycoords="axes fraction",
-                fontsize=fontsize,
-                horizontalalignment="left",
-                verticalalignment="bottom",
-            )'''
 
     elif centroid is not None:
         if corotate:
             centroid[0], centroid[1] = f_rot1(centroid[0], centroid[1], phi - np.pi / 2)
-            
-            new_sigma_x = np.abs(np.cos(phi - np.pi / 2))*centroid[2] + np.abs(np.sin(phi - np.pi / 2))*centroid[3]
-            new_sigma_y = np.abs(np.sin(phi - np.pi / 2))*centroid[2] + np.abs(np.cos(phi - np.pi / 2))*centroid[3]
+
+            new_sigma_x = (
+                np.abs(np.cos(phi - np.pi / 2)) * centroid[2]
+                + np.abs(np.sin(phi - np.pi / 2)) * centroid[3]
+            )
+            new_sigma_y = (
+                np.abs(np.sin(phi - np.pi / 2)) * centroid[2]
+                + np.abs(np.cos(phi - np.pi / 2)) * centroid[3]
+            )
             centroid[2] = new_sigma_x
             centroid[3] = new_sigma_y
 
@@ -189,31 +181,42 @@ def plot_binary(
             zorder=2,
             label=label,
         )
-    
+
     if beam is not None:
         fwhm_maj, fwhm_min, angle = beam
         if corotate:
             angle += phi - np.pi / 2
         aux_tr_box = offsetbox.AuxTransformBox(ax.transData)
-        aux_tr_box.add_artist(patches.Ellipse(
-            (0, 0), facecolor='gray', edgecolor=None, alpha=0.5, 
-            width=fwhm_min/mas, height=fwhm_maj/mas, angle=-angle/deg))
-        box = offsetbox.AnchoredOffsetbox(child=aux_tr_box, loc='lower right', frameon=True)
+        aux_tr_box.add_artist(
+            patches.Ellipse(
+                (0, 0),
+                facecolor="gray",
+                edgecolor=None,
+                alpha=0.5,
+                width=fwhm_min / mas,
+                height=fwhm_maj / mas,
+                angle=-angle / deg,
+            )
+        )
+        box = offsetbox.AnchoredOffsetbox(
+            child=aux_tr_box, loc="lower right", frameon=True
+        )
         ax.add_artist(box)
         box.set_clip_box(ax.bbox)
-    
+
     if d is not None:
-        angle = np.arctan(2*R_sun/d)/mas
-        asb = AnchoredSizeBar(ax.transData,
-                          angle,
-                          r"2$R_{\odot}$",
-                          loc=bar_pos,
-                          frameon=False, 
-                          )
+        angle = np.arctan(2 * R_sun / d) / mas
+        asb = AnchoredSizeBar(
+            ax.transData,
+            angle,
+            r"2$R_{\odot}$",
+            loc=bar_pos,
+            frameon=False,
+        )
         ax.add_artist(asb)
 
     ax.set_aspect("equal")
-    
+
     ax.tick_params(axis="both", which="major", color="darkgray")
 
     ax.set_xlim(mapsize / 2, -mapsize / 2)
@@ -224,12 +227,36 @@ def plot_binary(
     if not corotate:
         if show_coord_axes:
             cm = binary.coord_cm(jd)
-            ra = cm.ra.to_string(unit='hourangle', sep=' ', precision=6, pad=True).replace('.', ' ').split()
-            ra = r'$%s^{\rm h} %s^{\rm m} %s\overset{{\rm s}}{.}%s$' % (ra[0], ra[1], ra[2], ra[3])
-            dec = cm.dec.to_string(unit='degree', sep=' ', precision=5, pad=True, alwayssign=True).replace('.', ' ').split()
-            dec = r'$%s^{\circ} %s^{\prime} %s\overset{\prime\prime}{.}$%s' % (dec[0], dec[1], dec[2], dec[3])
-            ax.set_xlabel(r"$\Delta \alpha$ (mas) from %s [GCRF3]" % ra, fontsize=fontsize)
-            ax.set_ylabel(r"$\Delta \delta$ (mas) from %s [GCRF3]" % dec, fontsize=fontsize)
+            ra = (
+                cm.ra.to_string(unit="hourangle", sep=" ", precision=6, pad=True)
+                .replace(".", " ")
+                .split()
+            )
+            ra = r"$%s^{\rm h} %s^{\rm m} %s\overset{{\rm s}}{.}%s$" % (
+                ra[0],
+                ra[1],
+                ra[2],
+                ra[3],
+            )
+            dec = (
+                cm.dec.to_string(
+                    unit="degree", sep=" ", precision=5, pad=True, alwayssign=True
+                )
+                .replace(".", " ")
+                .split()
+            )
+            dec = r"$%s^{\circ} %s^{\prime} %s\overset{\prime\prime}{.}$%s" % (
+                dec[0],
+                dec[1],
+                dec[2],
+                dec[3],
+            )
+            ax.set_xlabel(
+                r"$\Delta \alpha$ (mas) from %s [GCRF3]" % ra, fontsize=fontsize
+            )
+            ax.set_ylabel(
+                r"$\Delta \delta$ (mas) from %s [GCRF3]" % dec, fontsize=fontsize
+            )
         else:
             ax.set_xlabel(r"$\Delta \alpha$ (mas)")
             ax.set_ylabel(r"$\Delta \delta$ (mas)")
@@ -350,4 +377,3 @@ class vlb_model:
         ax.grid()
 
         return fig, ax
-
