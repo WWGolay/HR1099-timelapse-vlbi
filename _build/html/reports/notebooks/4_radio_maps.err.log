@@ -1,0 +1,237 @@
+Traceback (most recent call last):
+  File "/Users/will/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/Users/will/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/nbclient/client.py", line 1305, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+  File "/Users/will/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/jupyter_core/utils/__init__.py", line 173, in wrapped
+    return loop.run_until_complete(inner)
+  File "/Users/will/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/asyncio/base_events.py", line 641, in run_until_complete
+    return future.result()
+  File "/Users/will/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/nbclient/client.py", line 705, in async_execute
+    await self.async_execute_cell(
+  File "/Users/will/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/nbclient/client.py", line 1058, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/Users/will/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/nbclient/client.py", line 914, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+fps = 30  # frames per second
+phaseps = 0.03  # phase per second
+phase_width = 0.03  # phase width of each epoch
+
+P = P / (24 * 3600)  # period in days
+
+epoch_orbit_phases = []
+for i, epoch in enumerate(epochs):
+    epoch_orbit_phases.append(hr1099.orbit_phase(mean_jd[i]))
+sorted_index = np.argsort(epoch_orbit_phases)
+phase_sorted_indices = np.argsort(epoch_orbit_phases)
+
+show_map = []
+jd_range = []
+for i in range(len(phase_sorted_indices)):
+    start = epoch_orbit_phases[phase_sorted_indices[i]] - phase_width
+    end = epoch_orbit_phases[phase_sorted_indices[i]] + phase_width
+
+    if i == 0:
+        rng = np.linspace(T0, T0 + P * start, int(fps * (start - 0) / phaseps))
+        s_rng = np.zeros_like(rng)
+        for j in range(len(rng)):
+            jd_range.append(rng[j])
+            show_map.append(s_rng[j])
+    else:
+        prev_end = epoch_orbit_phases[phase_sorted_indices[i - 1]] + phase_width
+        if not prev_end > start:
+            rng = np.linspace(
+                T0 + P * prev_end,
+                T0 + P * start,
+                int(fps * (start - prev_end) / phaseps),
+            )
+            s_rng = np.zeros_like(rng)
+            for j in range(len(rng)):
+                jd_range.append(rng[j])
+                show_map.append(s_rng[j])
+        else:
+            start = prev_end
+
+    rng = np.linspace(
+        T0 + P * start, T0 + P * end, int(2.5 * fps * (end - start) / phaseps)
+    )
+    s_rng = np.ones_like(rng)
+    for j in range(len(rng)):
+        jd_range.append(rng[j])
+        show_map.append(s_rng[j])
+
+    if i == len(phase_sorted_indices) - 1:
+        rng = np.linspace(T0 + P * end, T0 + P, int(fps * (1 - end) / phaseps))
+        s_rng = np.zeros_like(rng)
+        for j in range(len(rng)):
+            jd_range.append(rng[j])
+            show_map.append(s_rng[j])
+
+
+def show_frame(frame):
+    ax.clear()
+    phase = hr1099.orbit_phase(jd_range[frame])
+
+    if show_map[frame]:
+        idx = np.argmin(np.abs(epoch_orbit_phases - phase))
+        utils.plot_binary(
+            ax,
+            hr1099,
+            jd_range[frame],
+            centroid=[mean_x[idx] + med_val[0], mean_y[idx] + med_val[1], 0, 0],
+            label=mean_mjd[idx],
+            model=models[epochs[idx]],
+            mapsize=4,
+            cells=256,
+            levs=[4, 8, 16, 32, 64],
+            beam=models[epochs[idx]].restoring_beam,
+            cmap="viridis",
+            d=d,
+            fontsize=14,
+            bar_pos="lower left",
+        )
+        ax.annotate(
+            "MJD=%.1f" % mean_mjd[idx],
+            xy=(0.05, 0.9),
+            xycoords="axes fraction",
+            fontsize=12,
+        )
+    else:
+        utils.plot_binary(ax, hr1099, jd_range[frame], mapsize=4, d=d, fontsize=14)
+
+    ax.annotate(
+        r"$\phi = %.3f$" % phase, xy=(0.05, 0.95), xycoords="axes fraction", fontsize=14
+    )
+    ax.grid(True, linestyle="dotted", alpha=0.5)
+
+
+fig, ax = plt.subplots(figsize=(7, 7))
+fig.set_facecolor("white")
+
+anim = animation.FuncAnimation(
+    fig, show_frame, frames=len(jd_range), interval=1e3 / fps
+)
+html = anim.to_html5_video()
+html = display.HTML(html)
+display.display(html)
+writervideo = animation.FFMpegWriter(fps=fps)
+anim.save(fig_path + "radio_maps.mp4", writer=writervideo)
+print("Saved animation to " + fig_path + "radio_maps.mp4")
+plt.close()
+------------------
+
+----- stderr -----
+MovieWriter stderr:
+[vost#0:0/libx264 @ 0x12e004920] Error submitting a packet to the muxer: Immediate exit requested
+[out#0/mp4 @ 0x6000020dc0c0] Error muxing a packet
+Received > 3 system signals, hard exiting
+------------------
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mKeyboardInterrupt[0m                         Traceback (most recent call last)
+File [0;32m~/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/matplotlib/animation.py:243[0m, in [0;36mAbstractMovieWriter.saving[0;34m(self, fig, outfile, dpi, *args, **kwargs)[0m
+[1;32m    242[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 243[0m     [38;5;28;01myield[39;00m [38;5;28mself[39m
+[1;32m    244[0m [38;5;28;01mfinally[39;00m:
+
+File [0;32m~/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/matplotlib/animation.py:1105[0m, in [0;36mAnimation.save[0;34m(self, filename, writer, fps, dpi, codec, bitrate, extra_args, metadata, extra_anim, savefig_kwargs, progress_callback)[0m
+[1;32m   1103[0m [38;5;28;01mfor[39;00m anim, d [38;5;129;01min[39;00m [38;5;28mzip[39m(all_anim, data):
+[1;32m   1104[0m     [38;5;66;03m# TODO: See if turning off blit is really necessary[39;00m
+[0;32m-> 1105[0m     [43manim[49m[38;5;241;43m.[39;49m[43m_draw_next_frame[49m[43m([49m[43md[49m[43m,[49m[43m [49m[43mblit[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   1106[0m     [38;5;28;01mif[39;00m progress_callback [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m:
+
+File [0;32m~/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/matplotlib/animation.py:1140[0m, in [0;36mAnimation._draw_next_frame[0;34m(self, framedata, blit)[0m
+[1;32m   1139[0m [38;5;28mself[39m[38;5;241m.[39m_pre_draw(framedata, blit)
+[0;32m-> 1140[0m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_draw_frame[49m[43m([49m[43mframedata[49m[43m)[49m
+[1;32m   1141[0m [38;5;28mself[39m[38;5;241m.[39m_post_draw(framedata, blit)
+
+File [0;32m~/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/matplotlib/animation.py:1768[0m, in [0;36mFuncAnimation._draw_frame[0;34m(self, framedata)[0m
+[1;32m   1766[0m [38;5;66;03m# Call the func with framedata and args. If blitting is desired,[39;00m
+[1;32m   1767[0m [38;5;66;03m# func needs to return a sequence of any artists that were modified.[39;00m
+[0;32m-> 1768[0m [38;5;28mself[39m[38;5;241m.[39m_drawn_artists [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_func[49m[43m([49m[43mframedata[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_args[49m[43m)[49m
+[1;32m   1770[0m [38;5;28;01mif[39;00m [38;5;28mself[39m[38;5;241m.[39m_blit:
+
+Cell [0;32mIn[5], line 62[0m, in [0;36mshow_frame[0;34m(frame)[0m
+[1;32m     61[0m idx [38;5;241m=[39m np[38;5;241m.[39margmin(np[38;5;241m.[39mabs(epoch_orbit_phases [38;5;241m-[39m phase))
+[0;32m---> 62[0m [43mutils[49m[38;5;241;43m.[39;49m[43mplot_binary[49m[43m([49m
+[1;32m     63[0m [43m    [49m[43max[49m[43m,[49m
+[1;32m     64[0m [43m    [49m[43mhr1099[49m[43m,[49m
+[1;32m     65[0m [43m    [49m[43mjd_range[49m[43m[[49m[43mframe[49m[43m][49m[43m,[49m
+[1;32m     66[0m [43m    [49m[43mcentroid[49m[38;5;241;43m=[39;49m[43m[[49m[43mmean_x[49m[43m[[49m[43midx[49m[43m][49m[43m [49m[38;5;241;43m+[39;49m[43m [49m[43mmed_val[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[43m,[49m[43m [49m[43mmean_y[49m[43m[[49m[43midx[49m[43m][49m[43m [49m[38;5;241;43m+[39;49m[43m [49m[43mmed_val[49m[43m[[49m[38;5;241;43m1[39;49m[43m][49m[43m,[49m[43m [49m[38;5;241;43m0[39;49m[43m,[49m[43m [49m[38;5;241;43m0[39;49m[43m][49m[43m,[49m
+[1;32m     67[0m [43m    [49m[43mlabel[49m[38;5;241;43m=[39;49m[43mmean_mjd[49m[43m[[49m[43midx[49m[43m][49m[43m,[49m
+[1;32m     68[0m [43m    [49m[43mmodel[49m[38;5;241;43m=[39;49m[43mmodels[49m[43m[[49m[43mepochs[49m[43m[[49m[43midx[49m[43m][49m[43m][49m[43m,[49m
+[1;32m     69[0m [43m    [49m[43mmapsize[49m[38;5;241;43m=[39;49m[38;5;241;43m4[39;49m[43m,[49m
+[1;32m     70[0m [43m    [49m[43mcells[49m[38;5;241;43m=[39;49m[38;5;241;43m256[39;49m[43m,[49m
+[1;32m     71[0m [43m    [49m[43mlevs[49m[38;5;241;43m=[39;49m[43m[[49m[38;5;241;43m4[39;49m[43m,[49m[43m [49m[38;5;241;43m8[39;49m[43m,[49m[43m [49m[38;5;241;43m16[39;49m[43m,[49m[43m [49m[38;5;241;43m32[39;49m[43m,[49m[43m [49m[38;5;241;43m64[39;49m[43m][49m[43m,[49m
+[1;32m     72[0m [43m    [49m[43mbeam[49m[38;5;241;43m=[39;49m[43mmodels[49m[43m[[49m[43mepochs[49m[43m[[49m[43midx[49m[43m][49m[43m][49m[38;5;241;43m.[39;49m[43mrestoring_beam[49m[43m,[49m
+[1;32m     73[0m [43m    [49m[43mcmap[49m[38;5;241;43m=[39;49m[38;5;124;43m"[39;49m[38;5;124;43mviridis[39;49m[38;5;124;43m"[39;49m[43m,[49m
+[1;32m     74[0m [43m    [49m[43md[49m[38;5;241;43m=[39;49m[43md[49m[43m,[49m
+[1;32m     75[0m [43m    [49m[43mfontsize[49m[38;5;241;43m=[39;49m[38;5;241;43m14[39;49m[43m,[49m
+[1;32m     76[0m [43m    [49m[43mbar_pos[49m[38;5;241;43m=[39;49m[38;5;124;43m"[39;49m[38;5;124;43mlower left[39;49m[38;5;124;43m"[39;49m[43m,[49m
+[1;32m     77[0m [43m[49m[43m)[49m
+[1;32m     78[0m ax[38;5;241m.[39mannotate(
+[1;32m     79[0m     [38;5;124m"[39m[38;5;124mMJD=[39m[38;5;132;01m%.1f[39;00m[38;5;124m"[39m [38;5;241m%[39m mean_mjd[idx],
+[1;32m     80[0m     xy[38;5;241m=[39m([38;5;241m0.05[39m, [38;5;241m0.9[39m),
+[1;32m     81[0m     xycoords[38;5;241m=[39m[38;5;124m"[39m[38;5;124maxes fraction[39m[38;5;124m"[39m,
+[1;32m     82[0m     fontsize[38;5;241m=[39m[38;5;241m12[39m,
+[1;32m     83[0m )
+
+File [0;32m~/Library/CloudStorage/Dropbox/research/HR1099/HR1099-timelapse-vlbi/notebooks/../library/utils.py:147[0m, in [0;36mplot_binary[0;34m(ax, binary, jd, corotate, r1, r2, plot_stars, centroid, color, label, model, mapsize, cells, levs, max_lev_scalar, cmap, bg, write_levs, beam, show_coord_axes, hour_range, fontsize, marker, d, bar_pos)[0m
+[1;32m    143[0m xx, yy [38;5;241m=[39m np[38;5;241m.[39mmeshgrid(
+[1;32m    144[0m     np[38;5;241m.[39mlinspace([38;5;241m-[39mmapsize [38;5;241m*[39m mas, mapsize [38;5;241m*[39m mas, cells, endpoint[38;5;241m=[39m[38;5;28;01mTrue[39;00m),
+[1;32m    145[0m     np[38;5;241m.[39mlinspace([38;5;241m-[39mmapsize [38;5;241m*[39m mas, mapsize [38;5;241m*[39m mas, cells, endpoint[38;5;241m=[39m[38;5;28;01mTrue[39;00m),
+[1;32m    146[0m )
+[0;32m--> 147[0m im_model [38;5;241m=[39m [43mmodel[49m[38;5;241;43m.[39;49m[43mget_image_plane_model[49m[43m([49m
+[1;32m    148[0m [43m    [49m[43mxx[49m[43m,[49m[43m [49m[43myy[49m[43m,[49m[43m [49m[43mx_shift[49m[38;5;241;43m=[39;49m[43mcentroid[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[43m [49m[38;5;241;43m*[39;49m[43m [49m[43mmas[49m[43m,[49m[43m [49m[43my_shift[49m[38;5;241;43m=[39;49m[43mcentroid[49m[43m[[49m[38;5;241;43m1[39;49m[43m][49m[43m [49m[38;5;241;43m*[39;49m[43m [49m[43mmas[49m
+[1;32m    149[0m [43m[49m[43m)[49m
+[1;32m    150[0m [38;5;28;01mif[39;00m corotate:
+
+[0;31mKeyboardInterrupt[0m: 
+
+During handling of the above exception, another exception occurred:
+
+[0;31mCalledProcessError[0m                        Traceback (most recent call last)
+Cell [0;32mIn[5], line 103[0m
+[1;32m    101[0m display[38;5;241m.[39mdisplay(html)
+[1;32m    102[0m writervideo [38;5;241m=[39m animation[38;5;241m.[39mFFMpegWriter(fps[38;5;241m=[39mfps)
+[0;32m--> 103[0m [43manim[49m[38;5;241;43m.[39;49m[43msave[49m[43m([49m[43mfig_path[49m[43m [49m[38;5;241;43m+[39;49m[43m [49m[38;5;124;43m"[39;49m[38;5;124;43mradio_maps.mp4[39;49m[38;5;124;43m"[39;49m[43m,[49m[43m [49m[43mwriter[49m[38;5;241;43m=[39;49m[43mwritervideo[49m[43m)[49m
+[1;32m    104[0m [38;5;28mprint[39m([38;5;124m"[39m[38;5;124mSaved animation to [39m[38;5;124m"[39m [38;5;241m+[39m fig_path [38;5;241m+[39m [38;5;124m"[39m[38;5;124mradio_maps.mp4[39m[38;5;124m"[39m)
+[1;32m    105[0m plt[38;5;241m.[39mclose()
+
+File [0;32m~/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/matplotlib/animation.py:1089[0m, in [0;36mAnimation.save[0;34m(self, filename, writer, fps, dpi, codec, bitrate, extra_args, metadata, extra_anim, savefig_kwargs, progress_callback)[0m
+[1;32m   1085[0m savefig_kwargs[[38;5;124m'[39m[38;5;124mtransparent[39m[38;5;124m'[39m] [38;5;241m=[39m [38;5;28;01mFalse[39;00m   [38;5;66;03m# just to be safe![39;00m
+[1;32m   1086[0m [38;5;66;03m# canvas._is_saving = True makes the draw_event animation-starting[39;00m
+[1;32m   1087[0m [38;5;66;03m# callback a no-op; canvas.manager = None prevents resizing the GUI[39;00m
+[1;32m   1088[0m [38;5;66;03m# widget (both are likewise done in savefig()).[39;00m
+[0;32m-> 1089[0m [38;5;28;01mwith[39;00m writer[38;5;241m.[39msaving([38;5;28mself[39m[38;5;241m.[39m_fig, filename, dpi), \
+[1;32m   1090[0m      cbook[38;5;241m.[39m_setattr_cm([38;5;28mself[39m[38;5;241m.[39m_fig[38;5;241m.[39mcanvas, _is_saving[38;5;241m=[39m[38;5;28;01mTrue[39;00m, manager[38;5;241m=[39m[38;5;28;01mNone[39;00m):
+[1;32m   1091[0m     [38;5;28;01mfor[39;00m anim [38;5;129;01min[39;00m all_anim:
+[1;32m   1092[0m         anim[38;5;241m.[39m_init_draw()  [38;5;66;03m# Clear the initial frame[39;00m
+
+File [0;32m~/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/contextlib.py:153[0m, in [0;36m_GeneratorContextManager.__exit__[0;34m(self, typ, value, traceback)[0m
+[1;32m    151[0m     value [38;5;241m=[39m typ()
+[1;32m    152[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 153[0m     [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mgen[49m[38;5;241;43m.[39;49m[43mthrow[49m[43m([49m[43mtyp[49m[43m,[49m[43m [49m[43mvalue[49m[43m,[49m[43m [49m[43mtraceback[49m[43m)[49m
+[1;32m    154[0m [38;5;28;01mexcept[39;00m [38;5;167;01mStopIteration[39;00m [38;5;28;01mas[39;00m exc:
+[1;32m    155[0m     [38;5;66;03m# Suppress StopIteration *unless* it's the same exception that[39;00m
+[1;32m    156[0m     [38;5;66;03m# was passed to throw().  This prevents a StopIteration[39;00m
+[1;32m    157[0m     [38;5;66;03m# raised inside the "with" statement from being suppressed.[39;00m
+[1;32m    158[0m     [38;5;28;01mreturn[39;00m exc [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m value
+
+File [0;32m~/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/matplotlib/animation.py:245[0m, in [0;36mAbstractMovieWriter.saving[0;34m(self, fig, outfile, dpi, *args, **kwargs)[0m
+[1;32m    243[0m     [38;5;28;01myield[39;00m [38;5;28mself[39m
+[1;32m    244[0m [38;5;28;01mfinally[39;00m:
+[0;32m--> 245[0m     [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mfinish[49m[43m([49m[43m)[49m
+
+File [0;32m~/miniforge3/envs/hr1099-timelapse-vlbi/lib/python3.10/site-packages/matplotlib/animation.py:360[0m, in [0;36mMovieWriter.finish[0;34m(self)[0m
+[1;32m    356[0m     _log[38;5;241m.[39mlog(
+[1;32m    357[0m         logging[38;5;241m.[39mWARNING [38;5;28;01mif[39;00m [38;5;28mself[39m[38;5;241m.[39m_proc[38;5;241m.[39mreturncode [38;5;28;01melse[39;00m logging[38;5;241m.[39mDEBUG,
+[1;32m    358[0m         [38;5;124m"[39m[38;5;124mMovieWriter stderr:[39m[38;5;130;01m\n[39;00m[38;5;132;01m%s[39;00m[38;5;124m"[39m, err)
+[1;32m    359[0m [38;5;28;01mif[39;00m [38;5;28mself[39m[38;5;241m.[39m_proc[38;5;241m.[39mreturncode:
+[0;32m--> 360[0m     [38;5;28;01mraise[39;00m subprocess[38;5;241m.[39mCalledProcessError(
+[1;32m    361[0m         [38;5;28mself[39m[38;5;241m.[39m_proc[38;5;241m.[39mreturncode, [38;5;28mself[39m[38;5;241m.[39m_proc[38;5;241m.[39margs, out, err)
+
+[0;31mCalledProcessError[0m: Command '['ffmpeg', '-f', 'rawvideo', '-vcodec', 'rawvideo', '-s', '1400x1400', '-pix_fmt', 'rgba', '-framerate', '30', '-loglevel', 'error', '-i', 'pipe:', '-vcodec', 'h264', '-pix_fmt', 'yuv420p', '-y', '../figures/radio_maps.mp4']' returned non-zero exit status 123.
+

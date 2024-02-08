@@ -1,0 +1,969 @@
+Traceback (most recent call last):
+  File "/Users/will/miniforge3/lib/python3.10/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/Users/will/miniforge3/lib/python3.10/site-packages/nbclient/client.py", line 1305, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+  File "/Users/will/miniforge3/lib/python3.10/site-packages/jupyter_core/utils/__init__.py", line 166, in wrapped
+    return loop.run_until_complete(inner)
+  File "/Users/will/miniforge3/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/Users/will/miniforge3/lib/python3.10/site-packages/nbclient/client.py", line 705, in async_execute
+    await self.async_execute_cell(
+  File "/Users/will/miniforge3/lib/python3.10/site-packages/nbclient/client.py", line 1058, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/Users/will/miniforge3/lib/python3.10/site-packages/nbclient/client.py", line 914, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+fps = 30  # frames per second
+phaseps = 0.03  # phase per second
+phase_width = 0.03  # phase width of each epoch
+
+P = P / (24 * 3600)  # period in days
+
+epoch_orbit_phases = []
+for i, epoch in enumerate(epochs):
+    epoch_orbit_phases.append(hr1099.orbit_phase(mean_jd[i]))
+sorted_index = np.argsort(epoch_orbit_phases)
+phase_sorted_indices = np.argsort(epoch_orbit_phases)
+
+show_map = []
+jd_range = []
+for i in range(len(phase_sorted_indices)):
+    start = epoch_orbit_phases[phase_sorted_indices[i]] - phase_width
+    end = epoch_orbit_phases[phase_sorted_indices[i]] + phase_width
+
+    if i == 0:
+        rng = np.linspace(T0, T0 + P * start, int(fps * (start - 0) / phaseps))
+        s_rng = np.zeros_like(rng)
+        for j in range(len(rng)):
+            jd_range.append(rng[j])
+            show_map.append(s_rng[j])
+    else:
+        prev_end = epoch_orbit_phases[phase_sorted_indices[i - 1]] + phase_width
+        if not prev_end > start:
+            rng = np.linspace(
+                T0 + P * prev_end,
+                T0 + P * start,
+                int(fps * (start - prev_end) / phaseps),
+            )
+            s_rng = np.zeros_like(rng)
+            for j in range(len(rng)):
+                jd_range.append(rng[j])
+                show_map.append(s_rng[j])
+        else:
+            start = prev_end
+
+    rng = np.linspace(
+        T0 + P * start, T0 + P * end, int(2.5 * fps * (end - start) / phaseps)
+    )
+    s_rng = np.ones_like(rng)
+    for j in range(len(rng)):
+        jd_range.append(rng[j])
+        show_map.append(s_rng[j])
+
+    if i == len(phase_sorted_indices) - 1:
+        rng = np.linspace(T0 + P * end, T0 + P, int(fps * (1 - end) / phaseps))
+        s_rng = np.zeros_like(rng)
+        for j in range(len(rng)):
+            jd_range.append(rng[j])
+            show_map.append(s_rng[j])
+
+
+def show_frame(frame):
+    ax.clear()
+    phase = hr1099.orbit_phase(jd_range[frame])
+
+    if show_map[frame]:
+        idx = np.argmin(np.abs(epoch_orbit_phases - phase))
+        utils.plot_binary(
+            ax,
+            hr1099,
+            jd_range[frame],
+            centroid=[mean_x[idx] + med_val[0], mean_y[idx] + med_val[1], 0, 0],
+            label=mean_mjd[idx],
+            model=models[epochs[idx]],
+            mapsize=4,
+            cells=256,
+            levs=[4, 8, 16, 32, 64],
+            beam=models[epochs[idx]].restoring_beam,
+            cmap="viridis",
+            d=d,
+            fontsize=14,
+            bar_pos="lower left",
+        )
+        ax.annotate(
+            "MJD=%.1f" % mean_mjd[idx],
+            xy=(0.05, 0.9),
+            xycoords="axes fraction",
+            fontsize=12,
+        )
+    else:
+        utils.plot_binary(ax, hr1099, jd_range[frame], mapsize=4, d=d, fontsize=14)
+
+    ax.annotate(
+        r"$\phi = %.3f$" % phase, xy=(0.05, 0.95), xycoords="axes fraction", fontsize=14
+    )
+    ax.grid(True, linestyle="dotted", alpha=0.5)
+
+
+fig, ax = plt.subplots(figsize=(7, 7))
+fig.set_facecolor("white")
+
+anim = animation.FuncAnimation(
+    fig, show_frame, frames=len(jd_range), interval=1e3 / fps
+)
+html = anim.to_html5_video()
+html = display.HTML(html)
+display.display(html)
+writervideo = animation.FFMpegWriter(fps=fps)
+anim.save(fig_path + "radio_maps.mp4", writer=writervideo)
+print("Saved animation to " + fig_path + "radio_maps.mp4")
+plt.close()
+------------------
+
+----- stderr -----
+MovieWriter stderr:
+Received > 3 system signals, hard exiting
+------------------
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mKeyboardInterrupt[0m                         Traceback (most recent call last)
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/animation.py:236[0m, in [0;36mAbstractMovieWriter.saving[0;34m(self, fig, outfile, dpi, *args, **kwargs)[0m
+[1;32m    235[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 236[0m     [38;5;28;01myield[39;00m [38;5;28mself[39m
+[1;32m    237[0m [38;5;28;01mfinally[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/animation.py:1091[0m, in [0;36mAnimation.save[0;34m(self, filename, writer, fps, dpi, codec, bitrate, extra_args, metadata, extra_anim, savefig_kwargs, progress_callback)[0m
+[1;32m   1089[0m [38;5;28;01mfor[39;00m anim, d [38;5;129;01min[39;00m [38;5;28mzip[39m(all_anim, data):
+[1;32m   1090[0m     [38;5;66;03m# TODO: See if turning off blit is really necessary[39;00m
+[0;32m-> 1091[0m     [43manim[49m[38;5;241;43m.[39;49m[43m_draw_next_frame[49m[43m([49m[43md[49m[43m,[49m[43m [49m[43mblit[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   1092[0m     [38;5;28;01mif[39;00m progress_callback [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/animation.py:1127[0m, in [0;36mAnimation._draw_next_frame[0;34m(self, framedata, blit)[0m
+[1;32m   1126[0m [38;5;28mself[39m[38;5;241m.[39m_draw_frame(framedata)
+[0;32m-> 1127[0m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_post_draw[49m[43m([49m[43mframedata[49m[43m,[49m[43m [49m[43mblit[49m[43m)[49m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/animation.py:1152[0m, in [0;36mAnimation._post_draw[0;34m(self, framedata, blit)[0m
+[1;32m   1151[0m [38;5;28;01melse[39;00m:
+[0;32m-> 1152[0m     [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_fig[49m[38;5;241;43m.[39;49m[43mcanvas[49m[38;5;241;43m.[39;49m[43mdraw_idle[49m[43m([49m[43m)[49m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/backend_bases.py:2060[0m, in [0;36mFigureCanvasBase.draw_idle[0;34m(self, *args, **kwargs)[0m
+[1;32m   2059[0m [38;5;28;01mwith[39;00m [38;5;28mself[39m[38;5;241m.[39m_idle_draw_cntx():
+[0;32m-> 2060[0m     [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mdraw[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/backends/backend_agg.py:436[0m, in [0;36mFigureCanvasAgg.draw[0;34m(self)[0m
+[1;32m    433[0m [38;5;28;01mwith[39;00m RendererAgg[38;5;241m.[39mlock, \
+[1;32m    434[0m      ([38;5;28mself[39m[38;5;241m.[39mtoolbar[38;5;241m.[39m_wait_cursor_for_draw_cm() [38;5;28;01mif[39;00m [38;5;28mself[39m[38;5;241m.[39mtoolbar
+[1;32m    435[0m       [38;5;28;01melse[39;00m nullcontext()):
+[0;32m--> 436[0m     [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mfigure[49m[38;5;241;43m.[39;49m[43mdraw[49m[43m([49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mrenderer[49m[43m)[49m
+[1;32m    437[0m     [38;5;66;03m# A GUI class may be need to update a window using this draw, so[39;00m
+[1;32m    438[0m     [38;5;66;03m# don't forget to call the superclass.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/artist.py:73[0m, in [0;36m_finalize_rasterization.<locals>.draw_wrapper[0;34m(artist, renderer, *args, **kwargs)[0m
+[1;32m     71[0m [38;5;129m@wraps[39m(draw)
+[1;32m     72[0m [38;5;28;01mdef[39;00m [38;5;21mdraw_wrapper[39m(artist, renderer, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[0;32m---> 73[0m     result [38;5;241m=[39m [43mdraw[49m[43m([49m[43martist[49m[43m,[49m[43m [49m[43mrenderer[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+[1;32m     74[0m     [38;5;28;01mif[39;00m renderer[38;5;241m.[39m_rasterizing:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/artist.py:50[0m, in [0;36mallow_rasterization.<locals>.draw_wrapper[0;34m(artist, renderer)[0m
+[1;32m     48[0m         renderer[38;5;241m.[39mstart_filter()
+[0;32m---> 50[0m     [38;5;28;01mreturn[39;00m [43mdraw[49m[43m([49m[43martist[49m[43m,[49m[43m [49m[43mrenderer[49m[43m)[49m
+[1;32m     51[0m [38;5;28;01mfinally[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/figure.py:2810[0m, in [0;36mFigure.draw[0;34m(self, renderer)[0m
+[1;32m   2809[0m [38;5;28mself[39m[38;5;241m.[39mpatch[38;5;241m.[39mdraw(renderer)
+[0;32m-> 2810[0m [43mmimage[49m[38;5;241;43m.[39;49m[43m_draw_list_compositing_images[49m[43m([49m
+[1;32m   2811[0m [43m    [49m[43mrenderer[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43martists[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43msuppressComposite[49m[43m)[49m
+[1;32m   2813[0m [38;5;28;01mfor[39;00m sfig [38;5;129;01min[39;00m [38;5;28mself[39m[38;5;241m.[39msubfigs:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/image.py:132[0m, in [0;36m_draw_list_compositing_images[0;34m(renderer, parent, artists, suppress_composite)[0m
+[1;32m    131[0m     [38;5;28;01mfor[39;00m a [38;5;129;01min[39;00m artists:
+[0;32m--> 132[0m         [43ma[49m[38;5;241;43m.[39;49m[43mdraw[49m[43m([49m[43mrenderer[49m[43m)[49m
+[1;32m    133[0m [38;5;28;01melse[39;00m:
+[1;32m    134[0m     [38;5;66;03m# Composite any adjacent images together[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/artist.py:50[0m, in [0;36mallow_rasterization.<locals>.draw_wrapper[0;34m(artist, renderer)[0m
+[1;32m     48[0m         renderer[38;5;241m.[39mstart_filter()
+[0;32m---> 50[0m     [38;5;28;01mreturn[39;00m [43mdraw[49m[43m([49m[43martist[49m[43m,[49m[43m [49m[43mrenderer[49m[43m)[49m
+[1;32m     51[0m [38;5;28;01mfinally[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/axes/_base.py:3082[0m, in [0;36m_AxesBase.draw[0;34m(self, renderer)[0m
+[1;32m   3080[0m     renderer[38;5;241m.[39mstop_rasterizing()
+[0;32m-> 3082[0m [43mmimage[49m[38;5;241;43m.[39;49m[43m_draw_list_compositing_images[49m[43m([49m
+[1;32m   3083[0m [43m    [49m[43mrenderer[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[43martists[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mfigure[49m[38;5;241;43m.[39;49m[43msuppressComposite[49m[43m)[49m
+[1;32m   3085[0m renderer[38;5;241m.[39mclose_group([38;5;124m'[39m[38;5;124maxes[39m[38;5;124m'[39m)
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/image.py:132[0m, in [0;36m_draw_list_compositing_images[0;34m(renderer, parent, artists, suppress_composite)[0m
+[1;32m    131[0m     [38;5;28;01mfor[39;00m a [38;5;129;01min[39;00m artists:
+[0;32m--> 132[0m         [43ma[49m[38;5;241;43m.[39;49m[43mdraw[49m[43m([49m[43mrenderer[49m[43m)[49m
+[1;32m    133[0m [38;5;28;01melse[39;00m:
+[1;32m    134[0m     [38;5;66;03m# Composite any adjacent images together[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/artist.py:50[0m, in [0;36mallow_rasterization.<locals>.draw_wrapper[0;34m(artist, renderer)[0m
+[1;32m     48[0m         renderer[38;5;241m.[39mstart_filter()
+[0;32m---> 50[0m     [38;5;28;01mreturn[39;00m [43mdraw[49m[43m([49m[43martist[49m[43m,[49m[43m [49m[43mrenderer[49m[43m)[49m
+[1;32m     51[0m [38;5;28;01mfinally[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/axis.py:1159[0m, in [0;36mAxis.draw[0;34m(self, renderer, *args, **kwargs)[0m
+[1;32m   1158[0m ticks_to_draw [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39m_update_ticks()
+[0;32m-> 1159[0m ticklabelBoxes, ticklabelBoxes2 [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_get_tick_bboxes[49m[43m([49m[43mticks_to_draw[49m[43m,[49m
+[1;32m   1160[0m [43m                                                        [49m[43mrenderer[49m[43m)[49m
+[1;32m   1162[0m [38;5;28;01mfor[39;00m tick [38;5;129;01min[39;00m ticks_to_draw:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/axis.py:1085[0m, in [0;36mAxis._get_tick_bboxes[0;34m(self, ticks, renderer)[0m
+[1;32m   1084[0m [38;5;250m[39m[38;5;124;03m"""Return lists of bboxes for ticks' label1's and label2's."""[39;00m
+[0;32m-> 1085[0m [38;5;28;01mreturn[39;00m ([tick[38;5;241m.[39mlabel1[38;5;241m.[39mget_window_extent(renderer)
+[1;32m   1086[0m          [38;5;28;01mfor[39;00m tick [38;5;129;01min[39;00m ticks [38;5;28;01mif[39;00m tick[38;5;241m.[39mlabel1[38;5;241m.[39mget_visible()],
+[1;32m   1087[0m         [tick[38;5;241m.[39mlabel2[38;5;241m.[39mget_window_extent(renderer)
+[1;32m   1088[0m          [38;5;28;01mfor[39;00m tick [38;5;129;01min[39;00m ticks [38;5;28;01mif[39;00m tick[38;5;241m.[39mlabel2[38;5;241m.[39mget_visible()])
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/axis.py:1085[0m, in [0;36m<listcomp>[0;34m(.0)[0m
+[1;32m   1084[0m [38;5;250m[39m[38;5;124;03m"""Return lists of bboxes for ticks' label1's and label2's."""[39;00m
+[0;32m-> 1085[0m [38;5;28;01mreturn[39;00m ([[43mtick[49m[38;5;241;43m.[39;49m[43mlabel1[49m[38;5;241;43m.[39;49m[43mget_window_extent[49m[43m([49m[43mrenderer[49m[43m)[49m
+[1;32m   1086[0m          [38;5;28;01mfor[39;00m tick [38;5;129;01min[39;00m ticks [38;5;28;01mif[39;00m tick[38;5;241m.[39mlabel1[38;5;241m.[39mget_visible()],
+[1;32m   1087[0m         [tick[38;5;241m.[39mlabel2[38;5;241m.[39mget_window_extent(renderer)
+[1;32m   1088[0m          [38;5;28;01mfor[39;00m tick [38;5;129;01min[39;00m ticks [38;5;28;01mif[39;00m tick[38;5;241m.[39mlabel2[38;5;241m.[39mget_visible()])
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/text.py:910[0m, in [0;36mText.get_window_extent[0;34m(self, renderer, dpi)[0m
+[1;32m    909[0m [38;5;28;01mwith[39;00m cbook[38;5;241m.[39m_setattr_cm([38;5;28mself[39m[38;5;241m.[39mfigure, dpi[38;5;241m=[39mdpi):
+[0;32m--> 910[0m     bbox, info, descent [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_get_layout[49m[43m([49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_renderer[49m[43m)[49m
+[1;32m    911[0m     x, y [38;5;241m=[39m [38;5;28mself[39m[38;5;241m.[39mget_unitless_position()
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/text.py:317[0m, in [0;36mText._get_layout[0;34m(self, renderer)[0m
+[1;32m    316[0m [38;5;28;01mif[39;00m clean_line:
+[0;32m--> 317[0m     w, h, d [38;5;241m=[39m [43mrenderer[49m[38;5;241;43m.[39;49m[43mget_text_width_height_descent[49m[43m([49m
+[1;32m    318[0m [43m        [49m[43mclean_line[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_fontproperties[49m[43m,[49m[43m [49m[43mismath[49m[38;5;241;43m=[39;49m[43mismath[49m[43m)[49m
+[1;32m    319[0m [38;5;28;01melse[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/backends/backend_agg.py:265[0m, in [0;36mRendererAgg.get_text_width_height_descent[0;34m(self, s, prop, ismath)[0m
+[1;32m    263[0m [38;5;28;01mif[39;00m ismath:
+[1;32m    264[0m     ox, oy, width, height, descent, fonts, used_characters [38;5;241m=[39m \
+[0;32m--> 265[0m         [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mmathtext_parser[49m[38;5;241;43m.[39;49m[43mparse[49m[43m([49m[43ms[49m[43m,[49m[43m [49m[38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mdpi[49m[43m,[49m[43m [49m[43mprop[49m[43m)[49m
+[1;32m    266[0m     [38;5;28;01mreturn[39;00m width, height, descent
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/mathtext.py:435[0m, in [0;36mMathTextParser.parse[0;34m(self, s, dpi, prop, _force_standard_ps_fonts)[0m
+[1;32m    432[0m [38;5;66;03m# lru_cache can't decorate parse() directly because the ps.useafm and[39;00m
+[1;32m    433[0m [38;5;66;03m# mathtext.fontset rcParams also affect the parse (e.g. by affecting[39;00m
+[1;32m    434[0m [38;5;66;03m# the glyph metrics).[39;00m
+[0;32m--> 435[0m [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parse_cached[49m[43m([49m[43ms[49m[43m,[49m[43m [49m[43mdpi[49m[43m,[49m[43m [49m[43mprop[49m[43m,[49m[43m [49m[43m_force_standard_ps_fonts[49m[43m)[49m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/mathtext.py:456[0m, in [0;36mMathTextParser._parse_cached[0;34m(self, s, dpi, prop, force_standard_ps_fonts)[0m
+[1;32m    454[0m     [38;5;28mself[39m[38;5;241m.[39m[38;5;18m__class__[39m[38;5;241m.[39m_parser [38;5;241m=[39m _mathtext[38;5;241m.[39mParser()
+[0;32m--> 456[0m box [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parser[49m[38;5;241;43m.[39;49m[43mparse[49m[43m([49m[43ms[49m[43m,[49m[43m [49m[43mfont_output[49m[43m,[49m[43m [49m[43mfontsize[49m[43m,[49m[43m [49m[43mdpi[49m[43m)[49m
+[1;32m    457[0m font_output[38;5;241m.[39mset_canvas_size(box[38;5;241m.[39mwidth, box[38;5;241m.[39mheight, box[38;5;241m.[39mdepth)
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/_mathtext.py:2237[0m, in [0;36mParser.parse[0;34m(self, s, fonts_object, fontsize, dpi)[0m
+[1;32m   2236[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 2237[0m     result [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_expression[49m[38;5;241;43m.[39;49m[43mparseString[49m[43m([49m[43ms[49m[43m)[49m
+[1;32m   2238[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m err:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/util.py:256[0m, in [0;36m_make_synonym_function.<locals>._inner[0;34m(self, *args, **kwargs)[0m
+[1;32m    251[0m [38;5;129m@wraps[39m(fn)
+[1;32m    252[0m [38;5;28;01mdef[39;00m [38;5;21m_inner[39m([38;5;28mself[39m, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[1;32m    253[0m     [38;5;66;03m# warnings.warn([39;00m
+[1;32m    254[0m     [38;5;66;03m#     f"Deprecated - use {fn.__name__}", DeprecationWarning, stacklevel=3[39;00m
+[1;32m    255[0m     [38;5;66;03m# )[39;00m
+[0;32m--> 256[0m     [38;5;28;01mreturn[39;00m [43mfn[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:1187[0m, in [0;36mParserElement.parse_string[0;34m(self, instring, parse_all, parseAll)[0m
+[1;32m   1186[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 1187[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[38;5;241;43m0[39;49m[43m)[49m
+[1;32m   1188[0m     [38;5;28;01mif[39;00m parseAll:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4059[0m, in [0;36mAnd.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4058[0m [38;5;28;01melse[39;00m:
+[0;32m-> 4059[0m     loc, exprtokens [38;5;241m=[39m [43me[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   4060[0m resultlist [38;5;241m+[39m[38;5;241m=[39m exprtokens
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5102[0m, in [0;36mZeroOrMore.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5101[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 5102[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5103[0m [38;5;28;01mexcept[39;00m (ParseException, [38;5;167;01mIndexError[39;00m):
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5000[0m, in [0;36m_MultipleMatch.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4999[0m     try_not_ender(instring, loc)
+[0;32m-> 5000[0m loc, tokens [38;5;241m=[39m [43mself_expr_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5001[0m [38;5;28;01mtry[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4037[0m, in [0;36mAnd.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4034[0m [38;5;28;01mdef[39;00m [38;5;21mparseImpl[39m([38;5;28mself[39m, instring, loc, doActions[38;5;241m=[39m[38;5;28;01mTrue[39;00m):
+[1;32m   4035[0m     [38;5;66;03m# pass False as callPreParse arg to _parse for first element, since we already[39;00m
+[1;32m   4036[0m     [38;5;66;03m# pre-parsed the string as part of our And pre-parsing[39;00m
+[0;32m-> 4037[0m     loc, resultlist [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexprs[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4038[0m [43m        [49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m
+[1;32m   4039[0m [43m    [49m[43m)[49m
+[1;32m   4040[0m     errorStop [38;5;241m=[39m [38;5;28;01mFalse[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:889[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    888[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 889[0m     tokens [38;5;241m=[39m [43mfn[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mtokens_start[49m[43m,[49m[43m [49m[43mret_tokens[49m[43m)[49m  [38;5;66;03m# type: ignore [call-arg, arg-type][39;00m
+[1;32m    890[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m [38;5;28;01mas[39;00m parse_action_exc:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:293[0m, in [0;36m_trim_arity.<locals>.wrapper[0;34m(*args)[0m
+[1;32m    292[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 293[0m     ret [38;5;241m=[39m [43mfunc[49m[43m([49m[38;5;241;43m*[39;49m[43margs[49m[43m[[49m[43mlimit[49m[43m:[49m[43m][49m[43m)[49m
+[1;32m    294[0m     found_arity [38;5;241m=[39m [38;5;28;01mTrue[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/_mathtext.py:2300[0m, in [0;36mParser.math_string[0;34m(self, s, loc, toks)[0m
+[1;32m   2299[0m [38;5;28;01mdef[39;00m [38;5;21mmath_string[39m([38;5;28mself[39m, s, loc, toks):
+[0;32m-> 2300[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_math_expression[49m[38;5;241;43m.[39;49m[43mparseString[49m[43m([49m[43mtoks[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[43m[[49m[38;5;241;43m1[39;49m[43m:[49m[38;5;241;43m-[39;49m[38;5;241;43m1[39;49m[43m][49m[43m)[49m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/util.py:256[0m, in [0;36m_make_synonym_function.<locals>._inner[0;34m(self, *args, **kwargs)[0m
+[1;32m    251[0m [38;5;129m@wraps[39m(fn)
+[1;32m    252[0m [38;5;28;01mdef[39;00m [38;5;21m_inner[39m([38;5;28mself[39m, [38;5;241m*[39margs, [38;5;241m*[39m[38;5;241m*[39mkwargs):
+[1;32m    253[0m     [38;5;66;03m# warnings.warn([39;00m
+[1;32m    254[0m     [38;5;66;03m#     f"Deprecated - use {fn.__name__}", DeprecationWarning, stacklevel=3[39;00m
+[1;32m    255[0m     [38;5;66;03m# )[39;00m
+[0;32m--> 256[0m     [38;5;28;01mreturn[39;00m [43mfn[49m[43m([49m[38;5;28;43mself[39;49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[43margs[49m[43m,[49m[43m [49m[38;5;241;43m*[39;49m[38;5;241;43m*[39;49m[43mkwargs[49m[43m)[49m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:1187[0m, in [0;36mParserElement.parse_string[0;34m(self, instring, parse_all, parseAll)[0m
+[1;32m   1186[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 1187[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[38;5;241;43m0[39;49m[43m)[49m
+[1;32m   1188[0m     [38;5;28;01mif[39;00m parseAll:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5000[0m, in [0;36m_MultipleMatch.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4999[0m     try_not_ender(instring, loc)
+[0;32m-> 5000[0m loc, tokens [38;5;241m=[39m [43mself_expr_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5001[0m [38;5;28;01mtry[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4293[0m, in [0;36mMatchFirst.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4292[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4293[0m     [38;5;28;01mreturn[39;00m [43me[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4294[0m [43m        [49m[43minstring[49m[43m,[49m
+[1;32m   4295[0m [43m        [49m[43mloc[49m[43m,[49m
+[1;32m   4296[0m [43m        [49m[43mdoActions[49m[43m,[49m
+[1;32m   4297[0m [43m    [49m[43m)[49m
+[1;32m   4298[0m [38;5;28;01mexcept[39;00m ParseFatalException [38;5;28;01mas[39;00m pfe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4293[0m, in [0;36mMatchFirst.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4292[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4293[0m     [38;5;28;01mreturn[39;00m [43me[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4294[0m [43m        [49m[43minstring[49m[43m,[49m
+[1;32m   4295[0m [43m        [49m[43mloc[49m[43m,[49m
+[1;32m   4296[0m [43m        [49m[43mdoActions[49m[43m,[49m
+[1;32m   4297[0m [43m    [49m[43m)[49m
+[1;32m   4298[0m [38;5;28;01mexcept[39;00m ParseFatalException [38;5;28;01mas[39;00m pfe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times), ParseElementEnhance.parseImpl at line 4569 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4293[0m, in [0;36mMatchFirst.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4292[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4293[0m     [38;5;28;01mreturn[39;00m [43me[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4294[0m [43m        [49m[43minstring[49m[43m,[49m
+[1;32m   4295[0m [43m        [49m[43mloc[49m[43m,[49m
+[1;32m   4296[0m [43m        [49m[43mdoActions[49m[43m,[49m
+[1;32m   4297[0m [43m    [49m[43m)[49m
+[1;32m   4298[0m [38;5;28;01mexcept[39;00m ParseFatalException [38;5;28;01mas[39;00m pfe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4037[0m, in [0;36mAnd.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4034[0m [38;5;28;01mdef[39;00m [38;5;21mparseImpl[39m([38;5;28mself[39m, instring, loc, doActions[38;5;241m=[39m[38;5;28;01mTrue[39;00m):
+[1;32m   4035[0m     [38;5;66;03m# pass False as callPreParse arg to _parse for first element, since we already[39;00m
+[1;32m   4036[0m     [38;5;66;03m# pre-parsed the string as part of our And pre-parsing[39;00m
+[0;32m-> 4037[0m     loc, resultlist [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexprs[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4038[0m [43m        [49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m
+[1;32m   4039[0m [43m    [49m[43m)[49m
+[1;32m   4040[0m     errorStop [38;5;241m=[39m [38;5;28;01mFalse[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5236[0m, in [0;36mOpt.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5235[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 5236[0m     loc, tokens [38;5;241m=[39m [43mself_expr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   5237[0m [38;5;28;01mexcept[39;00m (ParseException, [38;5;167;01mIndexError[39;00m):
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4293[0m, in [0;36mMatchFirst.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4292[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4293[0m     [38;5;28;01mreturn[39;00m [43me[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4294[0m [43m        [49m[43minstring[49m[43m,[49m
+[1;32m   4295[0m [43m        [49m[43mloc[49m[43m,[49m
+[1;32m   4296[0m [43m        [49m[43mdoActions[49m[43m,[49m
+[1;32m   4297[0m [43m    [49m[43m)[49m
+[1;32m   4298[0m [38;5;28;01mexcept[39;00m ParseFatalException [38;5;28;01mas[39;00m pfe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4059[0m, in [0;36mAnd.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4058[0m [38;5;28;01melse[39;00m:
+[0;32m-> 4059[0m     loc, exprtokens [38;5;241m=[39m [43me[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   4060[0m resultlist [38;5;241m+[39m[38;5;241m=[39m exprtokens
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5102[0m, in [0;36mZeroOrMore.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5101[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 5102[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5103[0m [38;5;28;01mexcept[39;00m (ParseException, [38;5;167;01mIndexError[39;00m):
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5000[0m, in [0;36m_MultipleMatch.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4999[0m     try_not_ender(instring, loc)
+[0;32m-> 5000[0m loc, tokens [38;5;241m=[39m [43mself_expr_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5001[0m [38;5;28;01mtry[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4293[0m, in [0;36mMatchFirst.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4292[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4293[0m     [38;5;28;01mreturn[39;00m [43me[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4294[0m [43m        [49m[43minstring[49m[43m,[49m
+[1;32m   4295[0m [43m        [49m[43mloc[49m[43m,[49m
+[1;32m   4296[0m [43m        [49m[43mdoActions[49m[43m,[49m
+[1;32m   4297[0m [43m    [49m[43m)[49m
+[1;32m   4298[0m [38;5;28;01mexcept[39;00m ParseFatalException [38;5;28;01mas[39;00m pfe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4293[0m, in [0;36mMatchFirst.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4292[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4293[0m     [38;5;28;01mreturn[39;00m [43me[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4294[0m [43m        [49m[43minstring[49m[43m,[49m
+[1;32m   4295[0m [43m        [49m[43mloc[49m[43m,[49m
+[1;32m   4296[0m [43m        [49m[43mdoActions[49m[43m,[49m
+[1;32m   4297[0m [43m    [49m[43m)[49m
+[1;32m   4298[0m [38;5;28;01mexcept[39;00m ParseFatalException [38;5;28;01mas[39;00m pfe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times), ParseElementEnhance.parseImpl at line 4569 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4293[0m, in [0;36mMatchFirst.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4292[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4293[0m     [38;5;28;01mreturn[39;00m [43me[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4294[0m [43m        [49m[43minstring[49m[43m,[49m
+[1;32m   4295[0m [43m        [49m[43mloc[49m[43m,[49m
+[1;32m   4296[0m [43m        [49m[43mdoActions[49m[43m,[49m
+[1;32m   4297[0m [43m    [49m[43m)[49m
+[1;32m   4298[0m [38;5;28;01mexcept[39;00m ParseFatalException [38;5;28;01mas[39;00m pfe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4037[0m, in [0;36mAnd.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4034[0m [38;5;28;01mdef[39;00m [38;5;21mparseImpl[39m([38;5;28mself[39m, instring, loc, doActions[38;5;241m=[39m[38;5;28;01mTrue[39;00m):
+[1;32m   4035[0m     [38;5;66;03m# pass False as callPreParse arg to _parse for first element, since we already[39;00m
+[1;32m   4036[0m     [38;5;66;03m# pre-parsed the string as part of our And pre-parsing[39;00m
+[0;32m-> 4037[0m     loc, resultlist [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexprs[49m[43m[[49m[38;5;241;43m0[39;49m[43m][49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4038[0m [43m        [49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m
+[1;32m   4039[0m [43m    [49m[43m)[49m
+[1;32m   4040[0m     errorStop [38;5;241m=[39m [38;5;28;01mFalse[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5236[0m, in [0;36mOpt.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5235[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 5236[0m     loc, tokens [38;5;241m=[39m [43mself_expr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   5237[0m [38;5;28;01mexcept[39;00m (ParseException, [38;5;167;01mIndexError[39;00m):
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4293[0m, in [0;36mMatchFirst.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4292[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4293[0m     [38;5;28;01mreturn[39;00m [43me[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m
+[1;32m   4294[0m [43m        [49m[43minstring[49m[43m,[49m
+[1;32m   4295[0m [43m        [49m[43mloc[49m[43m,[49m
+[1;32m   4296[0m [43m        [49m[43mdoActions[49m[43m,[49m
+[1;32m   4297[0m [43m    [49m[43m)[49m
+[1;32m   4298[0m [38;5;28;01mexcept[39;00m ParseFatalException [38;5;28;01mas[39;00m pfe:
+
+    [0;31m[... skipping similar frames: ParserElement._parseCache at line 974 (1 times), ParserElement._parseNoCache at line 850 (1 times)][0m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:5529[0m, in [0;36mForward.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   5528[0m [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m ParserElement[38;5;241m.[39m_left_recursion_enabled:
+[0;32m-> 5529[0m     [38;5;28;01mreturn[39;00m [38;5;28;43msuper[39;49m[43m([49m[43m)[49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m   5530[0m [38;5;66;03m# ## Bounded Recursion algorithm ##[39;00m
+[1;32m   5531[0m [38;5;66;03m# Recursion only needs to be processed at ``Forward`` elements, since they are[39;00m
+[1;32m   5532[0m [38;5;66;03m# the only ones that can actually refer to themselves. The general idea is[39;00m
+[0;32m   (...)[0m
+[1;32m   5547[0m [38;5;66;03m# we expand using `doActions=False` and only run `doActions=True` if the next[39;00m
+[1;32m   5548[0m [38;5;66;03m# recursion level is acceptable.[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:974[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    973[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 974[0m     value [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_parseNoCache[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[43m)[49m
+[1;32m    975[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pe:
+[1;32m    976[0m     [38;5;66;03m# cache a copy of the exception, without the traceback[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:850[0m, in [0;36mParserElement._parseNoCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    849[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 850[0m     loc, tokens [38;5;241m=[39m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mparseImpl[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mpre_loc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m)[49m
+[1;32m    851[0m [38;5;28;01mexcept[39;00m [38;5;167;01mIndexError[39;00m:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:4569[0m, in [0;36mParseElementEnhance.parseImpl[0;34m(self, instring, loc, doActions)[0m
+[1;32m   4568[0m [38;5;28;01mtry[39;00m:
+[0;32m-> 4569[0m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mexpr[49m[38;5;241;43m.[39;49m[43m_parse[49m[43m([49m[43minstring[49m[43m,[49m[43m [49m[43mloc[49m[43m,[49m[43m [49m[43mdoActions[49m[43m,[49m[43m [49m[43mcallPreParse[49m[38;5;241;43m=[39;49m[38;5;28;43;01mFalse[39;49;00m[43m)[49m
+[1;32m   4570[0m [38;5;28;01mexcept[39;00m ParseBaseException [38;5;28;01mas[39;00m pbe:
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/pyparsing/core.py:970[0m, in [0;36mParserElement._parseCache[0;34m(self, instring, loc, doActions, callPreParse)[0m
+[1;32m    969[0m cache [38;5;241m=[39m ParserElement[38;5;241m.[39mpackrat_cache
+[0;32m--> 970[0m value [38;5;241m=[39m [43mcache[49m[38;5;241;43m.[39;49m[43mget[49m[43m([49m[43mlookup[49m[43m)[49m
+[1;32m    971[0m [38;5;28;01mif[39;00m value [38;5;129;01mis[39;00m cache[38;5;241m.[39mnot_in_cache:
+
+[0;31mKeyboardInterrupt[0m: 
+
+During handling of the above exception, another exception occurred:
+
+[0;31mCalledProcessError[0m                        Traceback (most recent call last)
+Cell [0;32mIn[5], line 99[0m
+[1;32m     94[0m fig[38;5;241m.[39mset_facecolor([38;5;124m"[39m[38;5;124mwhite[39m[38;5;124m"[39m)
+[1;32m     96[0m anim [38;5;241m=[39m animation[38;5;241m.[39mFuncAnimation(
+[1;32m     97[0m     fig, show_frame, frames[38;5;241m=[39m[38;5;28mlen[39m(jd_range), interval[38;5;241m=[39m[38;5;241m1e3[39m [38;5;241m/[39m fps
+[1;32m     98[0m )
+[0;32m---> 99[0m html [38;5;241m=[39m [43manim[49m[38;5;241;43m.[39;49m[43mto_html5_video[49m[43m([49m[43m)[49m
+[1;32m    100[0m html [38;5;241m=[39m display[38;5;241m.[39mHTML(html)
+[1;32m    101[0m display[38;5;241m.[39mdisplay(html)
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/animation.py:1270[0m, in [0;36mAnimation.to_html5_video[0;34m(self, embed_limit)[0m
+[1;32m   1266[0m Writer [38;5;241m=[39m writers[mpl[38;5;241m.[39mrcParams[[38;5;124m'[39m[38;5;124manimation.writer[39m[38;5;124m'[39m]]
+[1;32m   1267[0m writer [38;5;241m=[39m Writer(codec[38;5;241m=[39m[38;5;124m'[39m[38;5;124mh264[39m[38;5;124m'[39m,
+[1;32m   1268[0m                 bitrate[38;5;241m=[39mmpl[38;5;241m.[39mrcParams[[38;5;124m'[39m[38;5;124manimation.bitrate[39m[38;5;124m'[39m],
+[1;32m   1269[0m                 fps[38;5;241m=[39m[38;5;241m1000.[39m [38;5;241m/[39m [38;5;28mself[39m[38;5;241m.[39m_interval)
+[0;32m-> 1270[0m [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43msave[49m[43m([49m[38;5;28;43mstr[39;49m[43m([49m[43mpath[49m[43m)[49m[43m,[49m[43m [49m[43mwriter[49m[38;5;241;43m=[39;49m[43mwriter[49m[43m)[49m
+[1;32m   1271[0m [38;5;66;03m# Now open and base64 encode.[39;00m
+[1;32m   1272[0m vid64 [38;5;241m=[39m base64[38;5;241m.[39mencodebytes(path[38;5;241m.[39mread_bytes())
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/animation.py:1073[0m, in [0;36mAnimation.save[0;34m(self, filename, writer, fps, dpi, codec, bitrate, extra_args, metadata, extra_anim, savefig_kwargs, progress_callback)[0m
+[1;32m   1067[0m     _log[38;5;241m.[39minfo([38;5;124m"[39m[38;5;124mDisabling savefig.bbox = [39m[38;5;124m'[39m[38;5;124mtight[39m[38;5;124m'[39m[38;5;124m, as it may cause [39m[38;5;124m"[39m
+[1;32m   1068[0m               [38;5;124m"[39m[38;5;124mframe size to vary, which is inappropriate for [39m[38;5;124m"[39m
+[1;32m   1069[0m               [38;5;124m"[39m[38;5;124manimation.[39m[38;5;124m"[39m)
+[1;32m   1070[0m [38;5;66;03m# canvas._is_saving = True makes the draw_event animation-starting[39;00m
+[1;32m   1071[0m [38;5;66;03m# callback a no-op; canvas.manager = None prevents resizing the GUI[39;00m
+[1;32m   1072[0m [38;5;66;03m# widget (both are likewise done in savefig()).[39;00m
+[0;32m-> 1073[0m [38;5;28;01mwith[39;00m mpl[38;5;241m.[39mrc_context({[38;5;124m'[39m[38;5;124msavefig.bbox[39m[38;5;124m'[39m: [38;5;28;01mNone[39;00m}), \
+[1;32m   1074[0m      writer[38;5;241m.[39msaving([38;5;28mself[39m[38;5;241m.[39m_fig, filename, dpi), \
+[1;32m   1075[0m      cbook[38;5;241m.[39m_setattr_cm([38;5;28mself[39m[38;5;241m.[39m_fig[38;5;241m.[39mcanvas,
+[1;32m   1076[0m                        _is_saving[38;5;241m=[39m[38;5;28;01mTrue[39;00m, manager[38;5;241m=[39m[38;5;28;01mNone[39;00m):
+[1;32m   1077[0m     [38;5;28;01mfor[39;00m anim [38;5;129;01min[39;00m all_anim:
+[1;32m   1078[0m         anim[38;5;241m.[39m_init_draw()  [38;5;66;03m# Clear the initial frame[39;00m
+
+File [0;32m~/miniforge3/lib/python3.10/contextlib.py:153[0m, in [0;36m_GeneratorContextManager.__exit__[0;34m(self, typ, value, traceback)[0m
+[1;32m    151[0m     value [38;5;241m=[39m typ()
+[1;32m    152[0m [38;5;28;01mtry[39;00m:
+[0;32m--> 153[0m     [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mgen[49m[38;5;241;43m.[39;49m[43mthrow[49m[43m([49m[43mtyp[49m[43m,[49m[43m [49m[43mvalue[49m[43m,[49m[43m [49m[43mtraceback[49m[43m)[49m
+[1;32m    154[0m [38;5;28;01mexcept[39;00m [38;5;167;01mStopIteration[39;00m [38;5;28;01mas[39;00m exc:
+[1;32m    155[0m     [38;5;66;03m# Suppress StopIteration *unless* it's the same exception that[39;00m
+[1;32m    156[0m     [38;5;66;03m# was passed to throw().  This prevents a StopIteration[39;00m
+[1;32m    157[0m     [38;5;66;03m# raised inside the "with" statement from being suppressed.[39;00m
+[1;32m    158[0m     [38;5;28;01mreturn[39;00m exc [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m value
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/animation.py:238[0m, in [0;36mAbstractMovieWriter.saving[0;34m(self, fig, outfile, dpi, *args, **kwargs)[0m
+[1;32m    236[0m     [38;5;28;01myield[39;00m [38;5;28mself[39m
+[1;32m    237[0m [38;5;28;01mfinally[39;00m:
+[0;32m--> 238[0m     [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43mfinish[49m[43m([49m[43m)[49m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/animation.py:344[0m, in [0;36mMovieWriter.finish[0;34m(self)[0m
+[1;32m    342[0m     overridden_cleanup()
+[1;32m    343[0m [38;5;28;01melse[39;00m:
+[0;32m--> 344[0m     [38;5;28;43mself[39;49m[38;5;241;43m.[39;49m[43m_cleanup[49m[43m([49m[43m)[49m
+
+File [0;32m~/miniforge3/lib/python3.10/site-packages/matplotlib/animation.py:375[0m, in [0;36mMovieWriter._cleanup[0;34m(self)[0m
+[1;32m    371[0m     _log[38;5;241m.[39mlog(
+[1;32m    372[0m         logging[38;5;241m.[39mWARNING [38;5;28;01mif[39;00m [38;5;28mself[39m[38;5;241m.[39m_proc[38;5;241m.[39mreturncode [38;5;28;01melse[39;00m logging[38;5;241m.[39mDEBUG,
+[1;32m    373[0m         [38;5;124m"[39m[38;5;124mMovieWriter stderr:[39m[38;5;130;01m\n[39;00m[38;5;132;01m%s[39;00m[38;5;124m"[39m, err)
+[1;32m    374[0m [38;5;28;01mif[39;00m [38;5;28mself[39m[38;5;241m.[39m_proc[38;5;241m.[39mreturncode:
+[0;32m--> 375[0m     [38;5;28;01mraise[39;00m subprocess[38;5;241m.[39mCalledProcessError(
+[1;32m    376[0m         [38;5;28mself[39m[38;5;241m.[39m_proc[38;5;241m.[39mreturncode, [38;5;28mself[39m[38;5;241m.[39m_proc[38;5;241m.[39margs, out, err)
+
+[0;31mCalledProcessError[0m: Command '['ffmpeg', '-f', 'rawvideo', '-vcodec', 'rawvideo', '-s', '1400x1400', '-pix_fmt', 'rgba', '-r', '29.999999999999996', '-loglevel', 'error', '-i', 'pipe:', '-vcodec', 'h264', '-pix_fmt', 'yuv420p', '-y', '/var/folders/72/x005f_sn1nq047zkj8cd5ppw0000gn/T/tmpvlwcroca/temp.m4v']' returned non-zero exit status 123.
+

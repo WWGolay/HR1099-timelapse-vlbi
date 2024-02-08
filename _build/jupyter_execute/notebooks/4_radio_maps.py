@@ -55,22 +55,34 @@ mas = deg / (60 * 60 * 1000)
 # In[3]:
 
 
-epochs, mean_x, mean_y, mean_jd, mean_x_err, mean_y_err = np.genfromtxt(
+epochs, mean_jd = np.genfromtxt(
     data_path + target + "_I_positions.txt",
     skip_header=2,
     dtype="U1,f8,f8,f8,f8,f8,f8,f8",
-    usecols=(0, 2, 3, 5, 6, 7),
+    usecols=(0, 5),
     unpack=True,
 )
 mean_mjd = np.round(mean_jd - 2400000.5, 1)
 
 models = {}
+mean_x = np.array([])
+mean_y = np.array([])
 for epoch in epochs:
     beam = utils.get_beam(os.path.join(data_path, f"{epoch}_{target}_sc.log"))
     models[epoch] = utils.vlb_model(
         os.path.join(data_path, f"{epoch}_{target}_sc.mod"), beam
     )
     models[epoch].excise_components(200)
+
+    x, y, jd, x_err, y_err = np.genfromtxt(
+        data_path + epoch + "_" + target + "_I_sub-epoch_positions.txt",
+        skip_header=2,
+        dtype="U5,f8,f8,f8,f8,f8,f8,f8",
+        usecols=(2, 3, 5, 6, 7),
+        unpack=True,
+    )
+    mean_x = np.append(mean_x, np.mean(x))
+    mean_y = np.append(mean_y, np.mean(y))
 
 sampler = emcee.backends.HDFBackend(data_path + target + "_orbital_chain.h5")
 flat_samples = sampler.get_chain(flat=True)
@@ -114,7 +126,7 @@ for i, epoch in enumerate(epochs):
         corotate=False,
         centroid=[mean_x[i] + med_val[0], mean_y[i] + med_val[1], 0, 0],
         label=mean_mjd[i],
-        cmap=cmc.lajolla,
+        cmap="viridis",
         model=models[epoch],
         mapsize=4,
         cells=256,
@@ -225,7 +237,7 @@ def show_frame(frame):
             cells=256,
             levs=[4, 8, 16, 32, 64],
             beam=models[epochs[idx]].restoring_beam,
-            cmap=cmc.lajolla,
+            cmap="viridis",
             d=d,
             fontsize=14,
             bar_pos="lower left",

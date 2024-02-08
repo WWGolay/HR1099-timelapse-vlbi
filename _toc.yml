@@ -11,3 +11,4 @@ sections:
 - file: notebooks/3_velocity_corner
 - file: notebooks/4_radio_maps
 - file: notebooks/5_velocity_comparison
+- file: notebooks/6_tropospheric_correction

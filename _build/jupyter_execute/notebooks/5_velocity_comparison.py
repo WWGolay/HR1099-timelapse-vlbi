@@ -160,10 +160,32 @@ for i, epoch in enumerate(epochs):
         color=cm[i],
         capsize=3,
     )
+    ax[2].errorbar(
+        [lower],
+        [-(i - 3) / 4],
+        xerr=[[mid - lower], [0]],
+        color=cm[i],
+        capsize=3,
+        marker="",
+        alpha=0.5,
+    )
+    ax[2].errorbar(
+        [upper],
+        [-(i - 3) / 4],
+        xerr=[[0], [upper - mid]],
+        color=cm[i],
+        capsize=3,
+        marker="",
+        alpha=0.5,
+    )
     ls.append(ln)
 
-ax[2].set_xlabel("Projected Linear Speed (km/s)")
-ax[0].set_ylabel("Number of Events")
+ax[0].yaxis.set_major_formatter(mpl.ticker.FormatStrFormatter("%3.0f"))
+ax[0].tick_params(labelsize=10, labelrotation=45)
+ax[0].set_ylabel("Number of Events", fontsize=12)
+ax[2].xaxis.set_major_formatter(mpl.ticker.FormatStrFormatter("%3.0f"))
+ax[2].tick_params(labelsize=10)
+ax[2].set_xlabel("Projected Linear Speed (km/s)", fontsize=12)
 ax[0].set_xlim(0, 2000)
 ax[0].set_ylim(0, 4000)
 ax[1].set_ylim(-1, 1)
@@ -171,6 +193,7 @@ ax[2].set_ylim(-1, 1)
 ax[1].set_yticks([])
 ax[2].set_yticks([])
 ax[0].legend(ls, [l.get_label() for l in ls], loc="upper right", fontsize=9)
+fig.set_dpi(300)
 plt.savefig(fig_path + "velocity_comparison.pdf", bbox_inches="tight")
 plt.show()
 
